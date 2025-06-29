@@ -30,22 +30,17 @@ const showTypeOptions = [
   { label: "Candidates", value: "Candidates" },
 ];
 
-/**
- * FiltersCard component displays and manages various filters for the dashboard.
- *
- * @param {object} props - Component props.
- * @param {object} props.filters - The current filters object from Dashboard.
- * @param {function(string, any): void} props.onFilterChange - Callback for when a filter changes (key, value).
- * @param {Array<object>} props.uniqueUsers - Options for the user filter.
- * @param {Array<object>} props.uniqueJobFunctions - Options for the job function filter.
- * @param {Array<object>} props.allTags - Options for the tags filter.
- */
 const FiltersCard = ({
-  filters, // Now receiving the full filters object
-  onFilterChange, // Now receiving the single onFilterChange function
-  uniqueUsers,
-  uniqueJobFunctions,
-  allTags,
+  searchTerm, setSearchTerm,
+  selectedUser, setSelectedUser,
+  selectedJobFunction, setSelectedJobFunction, uniqueJobFunctions,
+  selectedTags, setSelectedTags, allTags,
+  selectedDateRange, setSelectedDateRange,
+  startTime, setStartTime, endTime, setEndTime,
+  customStartDate, setCustomStartDate, customEndDate, setCustomEndDate,
+  groupBy, setGroupBy,
+  showType, setShowType, // This maps to backend's 'filterBy'
+  uniqueUsers // This prop is used for the options in the Users Select
 }) => {
 
   // Helper function to find the currently selected value(s) for react-select
@@ -53,20 +48,18 @@ const FiltersCard = ({
     if (!options || !Array.isArray(options)) return isMulti ? [] : null;
 
     if (isMulti) {
-      const valuesArray = Array.isArray(currentValues) ? currentValues : [];
-      return options.filter(option => valuesArray.includes(option.value));
+      return options.filter(option => currentValues?.includes(option.value));
     } else {
-      const targetValue = currentValues;
+      const targetValue = currentValues?.[0] || "All";
       return options.find(option => option.value === targetValue) || null;
     }
   };
 
-  // Generic handler for react-select components that will call the consolidated onFilterChange
-  const handleSelectChange = (key, isMulti) => (selectedOption) => {
+  const handleSelectChange = (setter, isMulti) => (selectedOption) => {
     if (isMulti) {
-      onFilterChange(key, selectedOption ? selectedOption.map(option => option.value) : []);
+      setter(selectedOption ? selectedOption.map(option => option.value) : []);
     } else {
-      onFilterChange(key, selectedOption ? selectedOption.value : "");
+      setter(selectedOption ? [selectedOption.value] : []); // Send as an array to match backend payload
     }
   };
 
@@ -74,21 +67,21 @@ const FiltersCard = ({
   return (
     <Card className="p-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
-        {/* Users Filter */}
+        {/* Users Filter (Re-implemented with react-select following manager's pattern) */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Users</label>
           <Select
             options={uniqueUsers}
             placeholder="All Users"
             classNamePrefix="react-select"
-            value={getSelectValue(uniqueUsers, filters.users, true)} // Get value from filters
-            onChange={handleSelectChange('users', true)} // Use onFilterChange
+            value={getSelectValue(uniqueUsers, selectedUser, true)}
+            onChange={handleSelectChange(setSelectedUser, true)}
             isClearable={true}
             isMulti
           />
         </div>
 
-        {/* Job Functions Filter */}
+        {/* Job Functions Filter (Changed to react-select) */}
         <div>
           <label htmlFor="jobFunctionSelect" className="block text-sm font-medium text-gray-700 mb-1">Job Functions</label>
           <Select
@@ -96,14 +89,14 @@ const FiltersCard = ({
             options={uniqueJobFunctions}
             placeholder="All Job Functions"
             classNamePrefix="react-select"
-            value={getSelectValue(uniqueJobFunctions, filters.jobFunctions, true)} // Get value from filters
-            onChange={handleSelectChange('jobFunctions', true)} // Use onFilterChange
+            value={getSelectValue(uniqueJobFunctions, selectedJobFunction, true)}
+            onChange={handleSelectChange(setSelectedJobFunction, true)}
             isClearable={true}
             isMulti
           />
         </div>
 
-        {/* Tags Filter */}
+        {/* Tags Filter (Changed to react-select) */}
         <div>
           <label htmlFor="tagsSelect" className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
           <Select
@@ -111,26 +104,26 @@ const FiltersCard = ({
             options={allTags}
             placeholder="All Tags"
             classNamePrefix="react-select"
-            value={getSelectValue(allTags, filters.tags, true)} // Get value from filters
-            onChange={handleSelectChange('tags', true)} // Use onFilterChange
+            value={getSelectValue(allTags, selectedTags, true)}
+            onChange={handleSelectChange(setSelectedTags, true)}
             isClearable={true}
             isMulti
           />
         </div>
       </div>
 
-      {/* DateTimeFilter component - props are now derived from the 'filters' object */}
+      {/* DateTimeFilter component */}
       <DateTimeFilter
-        selectedDateRange={filters.dateFilter}
-        onDateRangeChange={(value) => onFilterChange('dateFilter', value)}
-        startTime={filters.startTime}
-        onStartTimeChange={(value) => onFilterChange('startTime', value)}
-        endTime={filters.endTime}
-        onEndTimeChange={(value) => onFilterChange('endTime', value)}
-        customStartDate={filters.customStartDate}
-        onCustomStartDateChange={(value) => onFilterChange('customStartDate', value)}
-        customEndDate={filters.customEndDate}
-        onCustomEndDateChange={(value) => onFilterChange('customEndDate', value)}
+        selectedDateRange={selectedDateRange}
+        onDateRangeChange={setSelectedDateRange}
+        startTime={startTime}
+        onStartTimeChange={setStartTime}
+        endTime={endTime}
+        onEndTimeChange={setEndTime}
+        customStartDate={customStartDate}
+        onCustomStartDateChange={setCustomStartDate}
+        customEndDate={customEndDate}
+        onCustomEndDateChange={setCustomEndDate}
       />
 
       {/* Group By, Show Candidates/Leads, Search Bar */}
@@ -139,8 +132,8 @@ const FiltersCard = ({
           <label htmlFor="groupBySelect" className="block text-sm font-medium text-gray-700">Group By</label>
           <select
             id="groupBySelect"
-            value={filters.groupBy} // Get value from filters
-            onChange={(e) => onFilterChange('groupBy', e.target.value)} // Use onFilterChange
+            value={groupBy}
+            onChange={(e) => setGroupBy(e.target.value)}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 h-10"
           >
             {groupByOptions.map(option => (
@@ -153,8 +146,8 @@ const FiltersCard = ({
           <label htmlFor="showTypeSelect" className="block text-sm font-medium text-gray-700">Show Candidates/Leads</label>
           <select
             id="showTypeSelect"
-            value={filters.filterBy} // Get value from filters
-            onChange={(e) => onFilterChange('filterBy', e.target.value)} // Use onFilterChange
+            value={showType}
+            onChange={(e) => setShowType(e.target.value)}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 h-10"
           >
             {showTypeOptions.map(option => (
@@ -163,13 +156,13 @@ const FiltersCard = ({
           </select>
         </div>
 
-        {/* Search Input */}
+        {/* Search Input takes remaining space, spanning 2 columns on medium screens and 2 on large */}
         <div className="relative col-span-1 md:col-span-2 lg:col-span-2">
           <Input
             type="text"
             placeholder="Search"
-            value={filters.search} // Get value from filters
-            onChange={(e) => onFilterChange('search', e.target.value)} // Use onFilterChange
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
             id="searchInput"
           />

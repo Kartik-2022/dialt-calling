@@ -17,10 +17,14 @@ import { formatDate } from '../helper-methods';
  */
 
 // Removed handleSort, sortField, sortDirection from props
-const CallRecordsTable = ({ data }) => {
+const CallRecordsTable = ({ data, handleSort, sortField, sortDirection }) => {
 
-  // Removed getSortIcon function
-  // const getSortIcon = (field) => { /* ... */ };
+  const getSortIcon = (field) => {
+    if (sortField === field) {
+      return sortDirection === "asc" ? " ▲" : " ▼";
+    }
+    return "";
+  };
 
   return (
     <div className="overflow-x-auto bg-white rounded-xl shadow-lg">
@@ -32,47 +36,51 @@ const CallRecordsTable = ({ data }) => {
                 <input type="checkbox" className="form-checkbox h-4 w-4 text-indigo-600 transition duration-150 ease-in-out rounded" />
               </div>
             </th>
-            {/* Removed onClick handlers and sort icon calls from headers */}
             <th
               scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+              onClick={() => handleSort("createdAt")}
             >
-              Created At
+              Created At {getSortIcon("createdAt")}
             </th>
             <th
               scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+              onClick={() => handleSort("candidateName")}
             >
-              Candidate Name
+              Candidate Name {getSortIcon("candidateName")}
             </th>
             <th
               scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+              onClick={() => handleSort("contactDetails")}
             >
-              Contact Details
+              Contact Details {getSortIcon("contactDetails")}
             </th>
             <th
               scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+              onClick={() => handleSort("jobFunction")}
             >
-              Job Function
+              Job Function {getSortIcon("jobFunction")}
             </th>
             <th
               scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+              onClick={() => handleSort("user")}
             >
-              User
+              User {getSortIcon("user")}
             </th>
             <th
               scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+              onClick={() => handleSort("tags")}
             >
-              Tags
+              Tags {getSortIcon("tags")}
             </th>
             <th
               scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-xl"
-            >
+              className="px-6 py-3 whitespace-nowrap text-right text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-xl">
               Action
             </th>
           </tr>
@@ -116,17 +124,14 @@ const CallRecordsTable = ({ data }) => {
                   ))
                 ) : 'N/A'}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                <div className="flex items-center space-x-2">
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                <div className="flex items-center justify-end space-x-2">
                   <span className="text-gray-700">{record.details}</span> {/* This is the activityTitle */}
-                  {/* Assuming 'record.user' is also the clickable part in the Action column */}
                   {record.user !== 'N/A' && (
                     <a href={`#user-${record.user}`} className="text-indigo-600 hover:text-indigo-900">
                       {record.user}
                     </a>
                   )}
-                  {/* You might also need a button here if the screenshot implies an action button */}
-                  {/* <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button> */}
                 </div>
               </td>
             </tr>

@@ -47,23 +47,11 @@ const DateTimeFilter = ({
         </>
       )}
 
-      {/* Custom Range fields for date selection, conditionally displayed */}
       {selectedDateRange === "Custom Range" && (
         <>
-          <div className="space-y-2 col-span-1 md:col-span-2 lg:col-span-1"> {/* Adjusted col-span for custom dates */}
+          <div className="space-y-2 col-span-1 md:col-span-2 lg:col-span-1">
             <label htmlFor="customStartDateInput" className="text-sm font-medium text-gray-700">Custom Start Date</label>
             <div className="relative">
-              {/* This input acts as a native date picker.
-                  For a library like react-datepicker, you would integrate it here.
-                  Example conceptual use (requires npm install react-datepicker and styling):
-                  <DatePicker
-                    selected={customStartDate}
-                    onChange={(date) => onCustomStartDateChange(date)}
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
-                  />
-                  day.js would be used to format and parse dates, e.g.,
-                  dayjs(date).format('YYYY-MM-DD')
-              */}
               <Input
                 type="date"
                 id="customStartDateInput"
@@ -74,10 +62,9 @@ const DateTimeFilter = ({
               <CalendarDays className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             </div>
           </div>
-          <div className="space-y-2 col-span-1 md:col-span-2 lg:col-span-1"> {/* Adjusted col-span for custom dates */}
+          <div className="space-y-2 col-span-1 md:col-span-2 lg:col-span-1">
             <label htmlFor="customEndDateInput" className="text-sm font-medium text-gray-700">Custom End Date</label>
             <div className="relative">
-              {/* Similar integration for react-datepicker for the end date */}
               <Input
                 type="date"
                 id="customEndDateInput"

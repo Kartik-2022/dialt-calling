@@ -44,7 +44,7 @@ function App() {
   // Simple conditional rendering based on login status
   return (
     <div className="App">
-      {true ? (
+      {isLoggedIn ? (
         <Dashboard onLogout={handleLogout} /> // Pass logout prop to Dashboard
       ) : (
         <Login onLoginSuccess={handleLoginSuccess} /> // Pass login success prop to Login
