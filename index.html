@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Daily Calling Tracker</title>
+    <!-- Tailwind CSS CDN - for development convenience -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        font-family: 'Inter', sans-serif; /* Recommended font from instructions */
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      /* Custom styles for the checkbox to match shadcn's visual */
+      input[type="checkbox"] {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        display: inline-block;
+        vertical-align: middle;
+        height: 16px;
+        width: 16px;
+        background-color: #fff;
+        border: 1px solid #d1d5db; /* border-input */
+        border-radius: 4px; /* rounded-sm */
+        cursor: pointer;
+        position: relative;
+      }
+      input[type="checkbox"]:checked {
+        background-color: #0F172A; /* bg-primary (dark slate) */
+        border-color: #0F172A;
+      }
+      input[type="checkbox"]:checked::after {
+        content: '';
+        position: absolute;
+        left: 5px;
+        top: 1px;
+        width: 4px;
+        height: 8px;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+      }
+      input[type="checkbox"]:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); /* focus-visible:ring-1 focus-visible:ring-ring */
+      }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>
