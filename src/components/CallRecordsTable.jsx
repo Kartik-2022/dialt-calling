@@ -1,6 +1,6 @@
 // src/components/CallRecordsTable.jsx
 import React from 'react';
-import { Button } from './ui/Button'; // Assuming you have a Button component
+// import { Button } from './ui/Button'; // Assuming you have a Button component (not directly used in table rendering)
 import { formatDate } from '../helper-methods';
 /**
  * @typedef {object} CallRecord
@@ -17,14 +17,10 @@ import { formatDate } from '../helper-methods';
  */
 
 // Removed handleSort, sortField, sortDirection from props
-const CallRecordsTable = ({ data, handleSort, sortField, sortDirection }) => {
+const CallRecordsTable = ({ data }) => {
 
-  const getSortIcon = (field) => {
-    if (sortField === field) {
-      return sortDirection === "asc" ? " ▲" : " ▼";
-    }
-    return "";
-  };
+  // Removed getSortIcon function as sorting is removed
+  // const getSortIcon = (field) => { /* ... */ };
 
   return (
     <div className="overflow-x-auto bg-white rounded-xl shadow-lg">
@@ -36,47 +32,42 @@ const CallRecordsTable = ({ data, handleSort, sortField, sortDirection }) => {
                 <input type="checkbox" className="form-checkbox h-4 w-4 text-indigo-600 transition duration-150 ease-in-out rounded" />
               </div>
             </th>
+            {/* Removed onClick handlers and sort icon calls from headers */}
             <th
               scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-              onClick={() => handleSort("createdAt")}
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
-              Created At {getSortIcon("createdAt")}
+              Created At
             </th>
             <th
               scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-              onClick={() => handleSort("candidateName")}
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
-              Candidate Name {getSortIcon("candidateName")}
+              Candidate Name
             </th>
             <th
               scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-              onClick={() => handleSort("contactDetails")}
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
-              Contact Details {getSortIcon("contactDetails")}
+              Contact Details
             </th>
             <th
               scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-              onClick={() => handleSort("jobFunction")}
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
-              Job Function {getSortIcon("jobFunction")}
+              Job Function
             </th>
             <th
               scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-              onClick={() => handleSort("user")}
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
-              User {getSortIcon("user")}
+              User
             </th>
             <th
               scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-              onClick={() => handleSort("tags")}
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
-              Tags {getSortIcon("tags")}
+              Tags
             </th>
             <th
               scope="col"

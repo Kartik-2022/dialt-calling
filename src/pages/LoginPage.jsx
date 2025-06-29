@@ -1,11 +1,23 @@
-// src/components/Login.jsx
+// src/pages/LoginPage.jsx
 import React, { useState } from 'react';
-import { Card } from './ui/Card'; // Assuming these UI components exist
-import { Input } from './ui/Input';
-import { Button } from './ui/Button';
-import { login as apiLogin } from '../http/http-calls'; // Your API login function
+// Adjusted import paths for UI components
+import { Card } from '../components/ui/Card';
+import { Input } from '../components/ui/Input';
+import { Button } from '../components/ui/Button';
 
-const Login = ({ onLoginSuccess }) => {
+// --- IMPORTANT CHANGE: Import 'login' directly as it's exported from http-calls.js ---
+import { login as apiLogin } from '../http/http-calls'; // Alias to avoid name conflict with context's login
+// -----------------------------------------------------------------------------------
+
+// Import the useAuth hook from your new AuthContext
+import { useAuth } from '../context/AuthContext';
+
+
+const LoginPage = () => { 
+  // Destructure the `login` function from the AuthContext.
+  // Renamed to `authContextLogin` to clearly differentiate from the API's `login` function.
+  const { login: authContextLogin } = useAuth();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -17,17 +29,19 @@ const Login = ({ onLoginSuccess }) => {
     setIsAuthenticating(true);
 
     try {
-      // Assuming your apiLogin expects { handle: email, password }
-      const response = await apiLogin({ handle: email, password });
-
-      if (response && response.error === false) {
-        onLoginSuccess(); // Call the success handler passed from App.jsx
+      // Call your API login function from http-calls.js.
+      // This function internally calls `setToken` from `token-interceptor.js`.
+      const response = await apiLogin({ handle: email, password }); // Pass an object as expected by your `login` function
+      
+      if (response && response.token) { 
+        // After apiLogin has successfully stored the token,
+        // inform AuthContext to update its `isAuthenticated` state and navigate.
+        authContextLogin(); // No need to pass token here, AuthContext will re-read from localStorage
       } else {
         setError(response.message || 'Login failed. Please check your credentials and try again.');
       }
     } catch (err) {
       console.error("Login API call failed:", err);
-      // err.reason for custom error handling from your http-service/http-calls if any
       setError(err.message || 'An unexpected error occurred during login. Please try again.');
     } finally {
       setIsAuthenticating(false);
@@ -53,7 +67,7 @@ const Login = ({ onLoginSuccess }) => {
             />
           </div>
           <div className="space-y-2">
-            <label htmlFor="password" className="text-sm font-medium text-gray-700">Password</label>
+            <label htmlFor="password" className="sr-only">Password</label>
             <Input
               id="password"
               type="password"
@@ -75,4 +89,4 @@ const Login = ({ onLoginSuccess }) => {
   );
 };
 
-export default Login;
+export default LoginPage;

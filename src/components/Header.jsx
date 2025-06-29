@@ -1,36 +1,39 @@
 // src/components/Header.jsx
 import React from 'react';
-import { Filter, LogOut } from 'lucide-react'; // Import LogOut icon
-import { Button } from './ui/Button';
+import { useAuth } from '../context/AuthContext'; // Import useAuth hook
+import { LogOut, LayoutDashboard } from 'lucide-react'; // Example icons
+import { NavLink } from 'react-router-dom'; // Import NavLink for navigation
 
-const Header = ({ onLogout }) => { // Accept onLogout prop
+const Header = () => {
+  const { logout } = useAuth(); // Get the logout function from AuthContext
+
   return (
-    <header className="flex h-16 items-center justify-between border-b px-6 bg-white shadow-sm">
+    <header className="bg-white shadow-md py-4 px-6 flex items-center justify-between sticky top-0 z-50 rounded-b-xl">
       <div className="flex items-center space-x-4">
-        <div className="text-xl font-semibold text-gray-800">SMOOTHIRE</div>
-        <nav className="hidden md:flex space-x-6 text-sm font-medium">
-          <a href="#" className="text-gray-600 hover:text-gray-900">Candidates</a>
-          <a href="#" className="text-gray-600 hover:text-gray-900">Clients</a>
-          <a href="#" className="text-gray-600 hover:text-gray-900">Openings</a>
-          <a href="#" className="text-gray-600 hover:text-gray-900">Daily Tasks</a>
-          <a href="#" className="text-gray-600 hover:text-gray-900">Queues</a>
-          <a href="#" className="text-gray-600 hover:text-gray-900">Saved Searches</a>
-          <a href="#" className="text-gray-600 hover:text-gray-900">Activity</a>
-          <a href="#" className="text-gray-600 hover:text-gray-900">Emails</a>
-          <a href="#" className="text-gray-600 hover:text-gray-900">Users</a>
-          <a href="#" className="text-gray-600 hover:text-gray-900">Reporting</a>
-          <a href="#" className="text-gray-600 hover:text-gray-900">Engagement Hub</a>
+        <div className="text-xl font-bold text-gray-800">SMOOTHIRE</div>
+        {/* Navigation Links */}
+        <nav className="hidden md:flex space-x-6">
+          <NavLink
+            to="/dashboard"
+            className={({ isActive }) =>
+              `text-gray-600 hover:text-indigo-600 flex items-center space-x-1 ${isActive ? 'font-semibold text-indigo-600' : ''}`
+            }
+          >
+            <LayoutDashboard className="h-4 w-4" />
+            <span>Dashboard</span>
+          </NavLink>
         </nav>
       </div>
+
       <div className="flex items-center space-x-4">
-        <Button variant="ghost" size="icon">
-          <Filter className="h-5 w-5" />
-        </Button>
-        {onLogout && ( // Conditionally render logout button if onLogout prop is provided
-          <Button variant="ghost" size="icon" onClick={onLogout} title="Logout">
-            <LogOut className="h-5 w-5" />
-          </Button>
-        )}
+        {/* Logout Button */}
+        <button
+          onClick={logout} // Use the logout function from AuthContext
+          className="flex items-center space-x-1 text-red-600 hover:text-red-800 font-medium px-3 py-2 rounded-md transition duration-150 ease-in-out bg-red-50 hover:bg-red-100"
+        >
+          <LogOut className="h-4 w-4" />
+          <span>Logout</span>
+        </button>
       </div>
     </header>
   );

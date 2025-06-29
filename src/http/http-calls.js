@@ -12,13 +12,13 @@ import { removeToken, setToken } from "./token-interceptor"; // Keep these impor
 
 // --- DASHBOARD RELATED API CALLS ---
 
+
+
+
+
 export const getAllActiviteLogs = (params = {}) => {
-  // IMPORTANT CHANGE: Removed query string construction
-  // The backend endpoint for activity logs is now expected to be called without parameters in the URL.
-  // If filters are needed, the backend likely expects a POST request with filters in the body,
-  // or this particular GET endpoint is for unfiltered data.
   return new Promise((resolve, reject) => {
-    makePostRequest(BASE_URL + `/activity/logs`, true) // No query string appended here
+     makePostRequest(BASE_URL + `/activity/logs`, true, params) // No query string appended here
       .then((res) => {
         resolve(res);
       })
@@ -28,6 +28,8 @@ export const getAllActiviteLogs = (params = {}) => {
       });
   });
 };
+
+
 
 // --- AUTHENTICATION API CALLS (from your original code) ---
 

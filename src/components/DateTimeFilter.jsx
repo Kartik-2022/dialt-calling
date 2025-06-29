@@ -4,7 +4,6 @@ import { Input } from './ui/Input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/Select';
 import { CalendarDays } from 'lucide-react';
 
-// Adjusted grid to be more flexible, especially when custom dates appear
 const DateTimeFilter = ({
   selectedDateRange,
   onDateRangeChange,
@@ -12,10 +11,10 @@ const DateTimeFilter = ({
   onStartTimeChange,
   endTime,
   onEndTimeChange,
-  customStartDate,
-  onCustomStartDateChange,
-  customEndDate,
-  onCustomEndDateChange,
+  customStartDate, // This will now be a YYYY-MM-DD string or undefined
+  onCustomStartDateChange, // This will receive a YYYY-MM-DD string or undefined
+  customEndDate,   // This will now be a YYYY-MM-DD string or undefined
+  onCustomEndDateChange,   // This will receive a YYYY-MM-DD string or undefined
 }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-end">
@@ -26,14 +25,12 @@ const DateTimeFilter = ({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {/* Only Today and Custom Range as requested */}
             <SelectItem value="Today">Today</SelectItem>
             <SelectItem value="Custom Range">Custom Range</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      {/* Show Start Time and End Time only if "Today" is selected */}
       {selectedDateRange === "Today" && (
         <>
           <div className="space-y-2">
@@ -55,8 +52,8 @@ const DateTimeFilter = ({
               <Input
                 type="date"
                 id="customStartDateInput"
-                value={customStartDate ? customStartDate.toISOString().split('T')[0] : ''}
-                onChange={(e) => onCustomStartDateChange(e.target.value ? new Date(e.target.value) : undefined)}
+                value={customStartDate || ''} // Directly use the string value
+                onChange={(e) => onCustomStartDateChange(e.target.value || undefined)} // Pass string directly
                 className="pr-10"
               />
               <CalendarDays className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -68,8 +65,8 @@ const DateTimeFilter = ({
               <Input
                 type="date"
                 id="customEndDateInput"
-                value={customEndDate ? customEndDate.toISOString().split('T')[0] : ''}
-                onChange={(e) => onCustomEndDateChange(e.target.value ? new Date(e.target.value) : undefined)}
+                value={customEndDate || ''} // Directly use the string value
+                onChange={(e) => onCustomEndDateChange(e.target.value || undefined)} // Pass string directly
                 className="pr-10"
               />
               <CalendarDays className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />

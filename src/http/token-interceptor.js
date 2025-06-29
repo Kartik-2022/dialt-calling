@@ -1,36 +1,40 @@
 // src/http/token-interceptor.js
+// This file manages localStorage operations for the authentication token.
 
-// The consistent key to use for storing and retrieving the token
-const TOKEN_STORAGE_KEY = 'recruitechUserToken';
+export const TOKEN_STORAGE_KEY = 'recruitechUserToken'; // Consistent key definition
 
-// Function to set the authentication token in localStorage
-export const setToken = (token) => {
+export const BASE_URL = "https://api-dev.smoothire.com/api/v1"; // IMPORTANT: Replace with your actual backend URL
+
+/**
+ * Retrieves the authentication token from localStorage.
+ * @returns {string | null} The stored token or null if not found.
+ */
+export const getToken = () => {
   try {
-    localStorage.setItem(TOKEN_STORAGE_KEY, token);
-    console.log("Token stored in localStorage with key:", TOKEN_STORAGE_KEY);
+    const token = localStorage.getItem(TOKEN_STORAGE_KEY);
+    return token;
   } catch (error) {
-    console.error("Error storing token in localStorage:", error);
+    console.error("Error retrieving token from localStorage:", error);
+    return null;
   }
 };
 
-// Function to get the authentication token from localStorage
-export const getToken = () => {
-  return new Promise((resolve, reject) => {
-    try {
-      const token = localStorage.getItem(TOKEN_STORAGE_KEY);
-      if (token) {
-        resolve(token);
-      } else {
-        resolve(null);
-      }
-    } catch (error) {
-      console.error("Error retrieving token from localStorage:", error);
-      reject(error); // Reject the promise on error
-    }
-  });
+/**
+ * Stores the authentication token in localStorage.
+ * @param {string} token - The JWT token to store.
+ */
+export const setToken = (token) => {
+  try {
+    localStorage.setItem(TOKEN_STORAGE_KEY, token);
+    console.log("Token saved to localStorage with key:", TOKEN_STORAGE_KEY);
+  } catch (error) {
+    console.error("Error saving token to localStorage:", error);
+  }
 };
 
-// Function to remove the authentication token from localStorage
+/**
+ * Removes the authentication token from localStorage.
+ */
 export const removeToken = () => {
   try {
     localStorage.removeItem(TOKEN_STORAGE_KEY);
