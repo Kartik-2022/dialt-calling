@@ -55,64 +55,83 @@ const DashboardPage = () => {
   const [filters, setFilters] = useState(initialFilters);
   const searchRef = useRef(null);
 
-  const [dynamicUsersOptions, setDynamicUsersOptions] = useState(STATIC_USERS_OPTIONS);
-  const [dynamicJobFunctionsOptions, setDynamicJobFunctionsOptions] = useState(STATIC_JOB_FUNCTIONS_OPTIONS);
-  const [dynamicTagsOptions, setDynamicTagsOptions] = useState(STATIC_TAGS_OPTIONS);
-
   const { logout } = useAuth();
 
 
-  const _prepareFiltersForPayload = (payload) => {
-    const newPayload = { ...payload };
+  const _prepareFiltersForPayload = (filtersData) => {
+    const newPayload = {
+      page: filtersData.page,
+      limit: filtersData.limit,
+      groupBy: filtersData.groupBy,
+      filterBy: filtersData.filterBy,
+    };
 
-    let effectiveStartDate = undefined;
-    let effectiveEndDate = undefined;
+    // DEBUG LOG: What are the raw time values coming into payload prep?
+    console.log("[_prepareFiltersForPayload] Raw filtersData.startTime:", filtersData.startTime);
+    console.log("[_prepareFiltersForPayload] Raw filtersData.endTime:", filtersData.endTime);
 
-    const now = new Date();
+    if (filtersData.users && filtersData.users.length > 0) {
+      newPayload.users = filtersData.users;
+    }
 
-    switch (newPayload.dateFilter) {
+    if (filtersData.jobFunctions && filtersData.jobFunctions.length > 0) {
+      newPayload.jobFunctions = filtersData.jobFunctions;
+    }
+
+    if (filtersData.tags && filtersData.tags.length > 0) {
+      newPayload.tags = filtersData.tags;
+    }
+
+    if (filtersData.search && filtersData.search.trim() !== '') {
+      newPayload.search = filtersData.search.trim();
+    }
+
+    switch (filtersData.dateFilter) {
       case "Today":
-        effectiveStartDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
-        effectiveEndDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+        newPayload.dateFilter = "Today";
+        if (filtersData.startTime && filtersData.startTime.trim() !== '') {
+          newPayload.startTime = filtersData.startTime;
+        }
+        if (filtersData.endTime && filtersData.endTime.trim() !== '') {
+          newPayload.endTime = filtersData.endTime;
+        }
         break;
       case "Custom Range":
-        if (typeof newPayload.customStartDate === 'string' && newPayload.customStartDate) {
-          const parts = newPayload.customStartDate.split('-');
+        let effectiveStartDate = undefined;
+        let effectiveEndDate = undefined;
+
+        if (filtersData.customStartDate && typeof filtersData.customStartDate === 'string') {
+          const parts = filtersData.customStartDate.split('-');
           effectiveStartDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 0, 0, 0, 0);
         }
-        if (typeof newPayload.customEndDate === 'string' && newPayload.customEndDate) {
-          const parts = newPayload.customEndDate.split('-');
+        if (filtersData.customEndDate && typeof filtersData.customEndDate === 'string') {
+          const parts = filtersData.customEndDate.split('-');
           effectiveEndDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 23, 59, 59, 999);
         }
+
+        if (effectiveStartDate instanceof Date && !isNaN(effectiveStartDate.getTime()) &&
+            effectiveEndDate instanceof Date && !isNaN(effectiveEndDate.getTime())) {
+            
+            if (filtersData.startTime && filtersData.startTime.trim() !== '') {
+                const [sh, sm] = filtersData.startTime.split(':').map(Number);
+                effectiveStartDate.setHours(sh, sm, 0, 0);
+            }
+            if (filtersData.endTime && filtersData.endTime.trim() !== '') {
+                const [eh, em] = filtersData.endTime.split(':').map(Number);
+                effectiveEndDate.setHours(eh, em, 59, 999);
+            }
+            newPayload.dateRange = {
+                start: effectiveStartDate.toISOString(),
+                end: effectiveEndDate.toISOString(),
+            };
+        }
         break;
-      
-    }
-
-    if ((newPayload.dateFilter === "Today" || newPayload.dateFilter === "Custom Range") && 
-        effectiveStartDate instanceof Date && !isNaN(effectiveStartDate.getTime()) &&
-        effectiveEndDate instanceof Date && !isNaN(effectiveEndDate.getTime())) {
-        
-        if (newPayload.startTime) {
-            const [sh, sm] = newPayload.startTime.split(':').map(Number);
-            effectiveStartDate.setHours(sh, sm, 0, 0);
-        }
-        if (newPayload.endTime) {
-            const [eh, em] = newPayload.endTime.split(':').map(Number);
-            effectiveEndDate.setHours(eh, em, 59, 999);
-        }
-    }
-
-    if (effectiveStartDate instanceof Date && !isNaN(effectiveStartDate.getTime()) &&
-        effectiveEndDate instanceof Date && !isNaN(effectiveEndDate.getTime())) {
-      newPayload.dateRange = {
-        start: effectiveStartDate.toISOString(),
-        end: effectiveEndDate.toISOString(),
-      };
-    } else {
-      delete newPayload.dateRange;
+      case "All":
+        break;
+      default:
+        break;
     }
     
-
     return newPayload;
   };
 
@@ -204,7 +223,7 @@ const DashboardPage = () => {
           if (record.title && typeof record.title === 'string') {
               if (record.title.toLowerCase().includes('answered')) status = 'Answered';
               else if (record.title.toLowerCase().includes('busy')) status = 'Busy';
-              else if (record.title.toLowerCase().includes('not reachable')) status = 'Not Reachable';
+              else if (record.title.toLowerCase().includes('not reachable')) status = 'Not Reached';
               else if (record.title.toLowerCase().includes('added a note')) status = 'Note Added';
           }
 
@@ -270,6 +289,11 @@ const DashboardPage = () => {
 
 
   const _handleFilterChange = (key, value) => {
+    // DEBUG LOG: Track key and value for filter changes
+    console.log(`[DashboardPage] _handleFilterChange - Key: ${key}, Value:`, value);
+    // DEBUG LOG: Filters state BEFORE update
+    console.log("[DashboardPage] Filters state BEFORE update (time check):", JSON.parse(JSON.stringify(filters)));
+
     let updatedFilters = { ...filters, [key]: value };
 
     if (key === "dateFilter" && value === "Custom Range") {
@@ -290,6 +314,9 @@ const DashboardPage = () => {
     }
     
     setFilters(updatedFilters); 
+    // DEBUG LOG: See the updated filters state AFTER calling setFilters
+    console.log("[DashboardPage] Filters state AFTER update (time check):", updatedFilters);
+
 
     if (key === "search") {
       if (searchRef.current) clearTimeout(searchRef.current);
@@ -321,9 +348,9 @@ const DashboardPage = () => {
         <FiltersCard
           filters={filters}
           onFilterChange={_handleFilterChange}
-          uniqueUsers={dynamicUsersOptions}
-          uniqueJobFunctions={dynamicJobFunctionsOptions}
-          allTags={dynamicTagsOptions}
+          uniqueUsers={STATIC_USERS_OPTIONS}
+          uniqueJobFunctions={STATIC_JOB_FUNCTIONS_OPTIONS}
+          allTags={STATIC_TAGS_OPTIONS}
         />
 
         <h3 className="text-lg font-semibold mt-6 mb-2">Call Records {isLoading && (

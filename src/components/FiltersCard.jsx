@@ -51,29 +51,26 @@ const FiltersCard = ({
 
   const handleReactSelectChange = (key) => (selectedOption) => {
     const value = selectedOption ? selectedOption.map(option => option.value) : [];
-    console.log(`[FiltersCard] ReactSelect Change: ${key}, Value:`, value); // DEBUG LOG
     onFilterChange(key, value);
   };
 
   const handleNativeSelectChange = (key) => (e) => {
     const value = e.target.value;
-    console.log(`[FiltersCard] Native Select Change: ${key}, Value:`, value); // DEBUG LOG
     onFilterChange(key, value);
   };
 
   const handleShadcnSelectChange = (key) => (value) => {
-    console.log(`[FiltersCard] Shadcn Select Change: ${key}, Value:`, value); // DEBUG LOG
     onFilterChange(key, value);
   };
 
   const handleInputChange = (key) => (e) => {
     const value = e.target.value;
-    console.log(`[FiltersCard] Input Change: ${key}, Value:`, value); // DEBUG LOG
+    // DEBUG LOG: What value is handleInputChange receiving for time fields?
+    console.log(`[FiltersCard] handleInputChange - Key: ${key}, Value:`, value);
     onFilterChange(key, value);
   };
 
   const handleDateChange = (key) => (date) => {
-    console.log(`[FiltersCard] Date Picker Change: ${key}, Value:`, date); // DEBUG LOG
     onFilterChange(key, date);
   };
 
@@ -127,9 +124,15 @@ const FiltersCard = ({
         selectedDateRange={filters.dateFilter}
         onDateRangeChange={handleShadcnSelectChange('dateFilter')}
         startTime={filters.startTime}
-        onStartTimeChange={handleInputChange('startTime')}
+        onStartTimeChange={(value) => { // DEBUG LOG here
+          console.log("[FiltersCard] Passing startTime to handleInputChange:", value);
+          handleInputChange('startTime')({ target: { value } }); // Manually call with event-like object
+        }}
         endTime={filters.endTime}
-        onEndTimeChange={handleInputChange('endTime')}
+        onEndTimeChange={(value) => { // DEBUG LOG here
+          console.log("[FiltersCard] Passing endTime to handleInputChange:", value);
+          handleInputChange('endTime')({ target: { value } }); // Manually call with event-like object
+        }}
         customStartDate={filters.customStartDate}
         onCustomStartDateChange={handleDateChange('customStartDate')}
         customEndDate={filters.customEndDate}
@@ -143,7 +146,8 @@ const FiltersCard = ({
             id="groupBySelect"
             value={filters.groupBy}
             onChange={handleNativeSelectChange('groupBy')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 h-10"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 h-10
+                       bg-white text-gray-900" // Added explicit light theme classes
           >
             {groupByOptions.map(option => (
               <option key={option.value} value={option.value}>{option.label}</option>
@@ -157,7 +161,8 @@ const FiltersCard = ({
             id="showTypeSelect"
             value={filters.filterBy}
             onChange={handleNativeSelectChange('filterBy')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 h-10"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 h-10
+                       bg-white text-gray-900" // Added explicit light theme classes
           >
             {showTypeOptions.map(option => (
               <option key={option.value} value={option.value}>{option.label}</option>

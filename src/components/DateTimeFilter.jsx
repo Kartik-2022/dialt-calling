@@ -35,11 +35,27 @@ const DateTimeFilter = ({
         <>
           <div className="space-y-2">
             <label htmlFor="startTimeInput" className="text-sm font-medium text-gray-700">Start Time</label>
-            <Input type="time" id="startTimeInput" value={startTime} onChange={(e) => onStartTimeChange(e.target.value)} />
+            <Input
+              type="time"
+              id="startTimeInput"
+              value={startTime}
+              onChange={(e) => {
+                console.log("[DateTimeFilter] startTime onChange:", e.target.value); // DEBUG LOG
+                onStartTimeChange(e.target.value);
+              }}
+            />
           </div>
           <div className="space-y-2">
             <label htmlFor="endTimeInput" className="text-sm font-medium text-gray-700">End Time</label>
-            <Input type="time" id="endTimeInput" value={endTime} onChange={(e) => onEndTimeChange(e.target.value)} />
+            <Input
+              type="time"
+              id="endTimeInput"
+              value={endTime}
+              onChange={(e) => {
+                console.log("[DateTimeFilter] endTime onChange:", e.target.value); // DEBUG LOG
+                onEndTimeChange(e.target.value);
+              }}
+            />
           </div>
         </>
       )}
@@ -53,7 +69,7 @@ const DateTimeFilter = ({
                 type="date"
                 id="customStartDateInput"
                 value={customStartDate || ''} 
-                onChange={(e) => onCustomStartDateChange(e.target.value || undefined)} 
+                onChange={(e) => onCustomStartDateChange(e.target.value)}
                 className="pr-10"
               />
               <CalendarDays className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -66,7 +82,7 @@ const DateTimeFilter = ({
                 type="date"
                 id="customEndDateInput"
                 value={customEndDate || ''} 
-                onChange={(e) => onCustomEndDateChange(e.target.value || undefined)} 
+                onChange={(e) => onCustomEndDateChange(e.target.value)}
                 className="pr-10"
               />
               <CalendarDays className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
