@@ -11,10 +11,10 @@ const DateTimeFilter = ({
   onStartTimeChange,
   endTime,
   onEndTimeChange,
-  customStartDate, // This will now be a YYYY-MM-DD string or undefined
-  onCustomStartDateChange, // This will receive a YYYY-MM-DD string or undefined
-  customEndDate,   // This will now be a YYYY-MM-DD string or undefined
-  onCustomEndDateChange,   // This will receive a YYYY-MM-DD string or undefined
+  customStartDate,
+  onCustomStartDateChange, 
+  customEndDate,  
+  onCustomEndDateChange,  
 }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-end">
@@ -52,8 +52,8 @@ const DateTimeFilter = ({
               <Input
                 type="date"
                 id="customStartDateInput"
-                value={customStartDate || ''} // Directly use the string value
-                onChange={(e) => onCustomStartDateChange(e.target.value || undefined)} // Pass string directly
+                value={customStartDate || ''} 
+                onChange={(e) => onCustomStartDateChange(e.target.value || undefined)} 
                 className="pr-10"
               />
               <CalendarDays className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -65,8 +65,8 @@ const DateTimeFilter = ({
               <Input
                 type="date"
                 id="customEndDateInput"
-                value={customEndDate || ''} // Directly use the string value
-                onChange={(e) => onCustomEndDateChange(e.target.value || undefined)} // Pass string directly
+                value={customEndDate || ''} 
+                onChange={(e) => onCustomEndDateChange(e.target.value || undefined)} 
                 className="pr-10"
               />
               <CalendarDays className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />

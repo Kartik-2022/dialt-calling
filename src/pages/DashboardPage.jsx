@@ -39,17 +39,15 @@ const initialFilters = {
   dateFilter: "Today",
   startTime: "",
   endTime: "",
-  customStartDate: "", // Still keep as string from UI perspective
-  customEndDate: "",   // Still keep as string from UI perspective
+  customStartDate: "",
+  customEndDate: "",
   search: "",
   groupBy: "Date",
   filterBy: "Both",
 };
 
 
-// START OF DASHBOARD COMPONENT DEFINITION
 const DashboardPage = () => {
-  // --- STATE DECLARATIONS ---
   const [callRecords, setCallRecords] = useState([]);
   const [totalCallRecordsCount, setTotalCallRecordsCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -64,25 +62,20 @@ const DashboardPage = () => {
   const { logout } = useAuth();
 
 
-  // --- HELPER FUNCTIONS ---
-
   const _prepareFiltersForPayload = (payload) => {
     const newPayload = { ...payload };
-    console.log("[_prepareFiltersForPayload] --- START ---");
-    console.log("[_prepareFiltersForPayload] Input Payload (raw filters state):", JSON.parse(JSON.stringify(payload)));
 
     let effectiveStartDate = undefined;
     let effectiveEndDate = undefined;
 
-    const now = new Date(); // Get current date/time once
+    const now = new Date();
 
     switch (newPayload.dateFilter) {
       case "Today":
-        effectiveStartDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0); // Start of today
-        effectiveEndDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999); // End of today
+        effectiveStartDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+        effectiveEndDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
         break;
       case "Custom Range":
-        // Parse YYYY-MM-DD strings into Date objects reliably
         if (typeof newPayload.customStartDate === 'string' && newPayload.customStartDate) {
           const parts = newPayload.customStartDate.split('-');
           effectiveStartDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 0, 0, 0, 0);
@@ -92,16 +85,9 @@ const DashboardPage = () => {
           effectiveEndDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 23, 59, 59, 999);
         }
         break;
-      case "All":
-        // No date/time filters should be sent for "All"
-        break;
-      // Other predefined ranges (Last 7 Days, This Month etc.) would go here if needed.
-      default:
-        // For any other dateFilter not explicitly handled, ensure no date range is sent
-        break;
+      
     }
 
-    // Apply specific times if startTime/endTime are provided AND a valid date range was set up
     if ((newPayload.dateFilter === "Today" || newPayload.dateFilter === "Custom Range") && 
         effectiveStartDate instanceof Date && !isNaN(effectiveStartDate.getTime()) &&
         effectiveEndDate instanceof Date && !isNaN(effectiveEndDate.getTime())) {
@@ -116,7 +102,6 @@ const DashboardPage = () => {
         }
     }
 
-    // --- CRITICAL FIX: Re-create dateRange object and nest start/end dates ---
     if (effectiveStartDate instanceof Date && !isNaN(effectiveStartDate.getTime()) &&
         effectiveEndDate instanceof Date && !isNaN(effectiveEndDate.getTime())) {
       newPayload.dateRange = {
@@ -124,35 +109,20 @@ const DashboardPage = () => {
         end: effectiveEndDate.toISOString(),
       };
     } else {
-      // If dates are invalid or dateFilter is "All" or not covered, ensure no dateRange is sent
       delete newPayload.dateRange;
     }
-    // --- END CRITICAL FIX ---
+    
 
-
-    // Clean up UI-specific filter keys from the payload
-    delete newPayload.dateFilter; // Delete dateFilter from root
-    delete newPayload.startTime;
-    delete newPayload.endTime;
-    delete newPayload.customStartDate;
-    delete newPayload.customEndDate;
-
-    // groupBy and filterBy are kept as they are in the original app's payload
-
-    console.log("[_prepareFiltersForPayload] Final Payload Sent to API:", newPayload);
-    console.log("[_prepareFiltersForPayload] --- END ---");
     return newPayload;
   };
 
 
   const _fetchActivityLogs = async (currentFilters, pageToFetch = 1) => {
-    console.log("[_fetchActivityLogs] Setting isLoading to true.");
     setIsLoading(true);
 
     try {
       const token = getToken();
       if (!token) {
-        console.error("Dashboard: Authentication token missing. Forcing logout.");
         logout();
         setIsLoading(false);
         return;
@@ -164,7 +134,6 @@ const DashboardPage = () => {
           limit: currentFilters.limit,
       });
 
-      console.log("[DashboardPage] Fetching activities with POST payload (pre-API call):", finalBackendPayload);
       const response = await getAllActiviteLogs(finalBackendPayload);
 
       if (response?.error === false && response?.activities) {
@@ -255,34 +224,26 @@ const DashboardPage = () => {
 
         if (pageToFetch === 1) {
             setCallRecords(formattedCallRecords);
-            console.log("[_fetchActivityLogs] Call records reset for new page 1 fetch. New count:", formattedCallRecords.length);
         } else {
             setCallRecords(prevRecords => [...prevRecords, ...formattedCallRecords]);
-            console.log("[_fetchActivityLogs] Call records appended. Total count:", (callRecords.length + formattedCallRecords.length));
         }
 
         setTotalCallRecordsCount(response.totalCount || 0);
-        console.log("[_fetchActivityLogs] Total records count from API:", response.totalCount);
 
       } else {
-        console.error("Failed to fetch call records:", response?.message || "Unknown error.");
         setCallRecords([]);
         setTotalCallRecordsCount(0);
       }
 
     } catch (err) {
-      console.error("Overall error during Dashboard data fetch:", err);
       logout();
       setCallRecords([]);
       setTotalCallRecordsCount(0);
     } finally {
-      console.log("[_fetchActivityLogs] Setting isLoading to false.");
       setIsLoading(false);
     }
   };
 
-
-  // --- EFFECTS ---
 
   const tokenCheckAndInitialFetch = async () => {
     const token = getToken();
@@ -308,46 +269,34 @@ const DashboardPage = () => {
   }, [logout]);
 
 
-  // --- EVENT HANDLERS ---
-
   const _handleFilterChange = (key, value) => {
-    console.log(`[DashboardPage] _handleFilterChange - Key: ${key}, Value:`, value);
     let updatedFilters = { ...filters, [key]: value };
 
-    // When changing dateFilter, ensure custom date/time fields are explicitly cleared to empty strings
-    // (not undefined) so they are always included in the payload sent to the backend.
     if (key === "dateFilter" && value === "Custom Range") {
-      updatedFilters.customStartDate = ""; // Set to empty string
-      updatedFilters.customEndDate = "";   // Set to empty string
+      updatedFilters.customStartDate = "";
+      updatedFilters.customEndDate = "";
       updatedFilters.startTime = "";
       updatedFilters.endTime = "";
-      console.log("[DashboardPage] Date filter set to 'Custom Range'. Resetting custom date/time fields to empty strings.");
     } else if (key === "dateFilter" && value !== "Custom Range") {
-        updatedFilters.customStartDate = ""; // Set to empty string
-        updatedFilters.customEndDate = "";   // Set to empty string
+        updatedFilters.customStartDate = "";
+        updatedFilters.customEndDate = "";
         updatedFilters.startTime = "";
         updatedFilters.endTime = "";
-        console.log(`[DashboardPage] Date filter set to '${value}'. Clearing custom date/time fields to empty strings.`);
     }
 
     if (key !== 'page' && key !== 'limit') {
         updatedFilters.page = 1;
-        console.log("[DashboardPage] Clearing call records before new fetch for filter change.");
-        setCallRecords([]); // Clear records to show loading state for new filters
-        console.log("[DashboardPage] Filter (not page/limit) changed. Resetting page to 1 and triggering fetch.");
+        setCallRecords([]);
     }
     
     setFilters(updatedFilters); 
-    console.log("[DashboardPage] _handleFilterChange - Filters state updated to:", updatedFilters);
 
     if (key === "search") {
       if (searchRef.current) clearTimeout(searchRef.current);
       searchRef.current = setTimeout(() => {
-        console.log("[DashboardPage] Triggering _fetchActivityLogs via search debounce.");
         _fetchActivityLogs(updatedFilters, updatedFilters.page);
       }, 1000);
     } else {
-      console.log(`[DashboardPage] Triggering _fetchActivityLogs for filter: ${key}.`);
       _fetchActivityLogs(updatedFilters, updatedFilters.page);
     }
   };
@@ -358,14 +307,11 @@ const DashboardPage = () => {
     if (newPage >= 1 && newPage <= totalPages) {
         const newFilters = { ...filters, page: newPage };
         setFilters(newFilters);
-        console.log("[DashboardPage] Clearing call records before new fetch for page change.");
-        setCallRecords([]); // Clear records when changing page to prevent showing old data during fetch
+        setCallRecords([]);
         _fetchActivityLogs(newFilters, newPage);
     }
   };
 
-
-  // --- COMPONENT RENDER ---
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">

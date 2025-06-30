@@ -1,8 +1,8 @@
 // src/main.jsx (Reverted)
 import React from 'react';
-import ReactDOM from 'react-dom/client'; // Keep react-dom/client if your package.json has React 18
+import ReactDOM from 'react-dom/client'; 
 import App from './App';
-import './index.css'; // Your global CSS
+import './index.css'; 
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

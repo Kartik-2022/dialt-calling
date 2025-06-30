@@ -1,21 +1,14 @@
 // src/pages/LoginPage.jsx
 import React, { useState } from 'react';
-// Adjusted import paths for UI components
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
-
-// --- IMPORTANT CHANGE: Import 'login' directly as it's exported from http-calls.js ---
-import { login as apiLogin } from '../http/http-calls'; // Alias to avoid name conflict with context's login
-// -----------------------------------------------------------------------------------
-
-// Import the useAuth hook from your new AuthContext
+import { login as apiLogin } from '../http/http-calls'; 
 import { useAuth } from '../context/AuthContext';
 
 
 const LoginPage = () => { 
-  // Destructure the `login` function from the AuthContext.
-  // Renamed to `authContextLogin` to clearly differentiate from the API's `login` function.
+  
   const { login: authContextLogin } = useAuth();
 
   const [email, setEmail] = useState('');
@@ -29,14 +22,12 @@ const LoginPage = () => {
     setIsAuthenticating(true);
 
     try {
-      // Call your API login function from http-calls.js.
-      // This function internally calls `setToken` from `token-interceptor.js`.
-      const response = await apiLogin({ handle: email, password }); // Pass an object as expected by your `login` function
+     
+      const response = await apiLogin({ handle: email, password }); 
       
       if (response && response.token) { 
-        // After apiLogin has successfully stored the token,
-        // inform AuthContext to update its `isAuthenticated` state and navigate.
-        authContextLogin(); // No need to pass token here, AuthContext will re-read from localStorage
+        
+        authContextLogin(); 
       } else {
         setError(response.message || 'Login failed. Please check your credentials and try again.');
       }
