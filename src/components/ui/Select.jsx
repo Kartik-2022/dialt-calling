@@ -1,9 +1,9 @@
 // src/components/ui/Select.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { Button } from './Button'; // Import Button for SelectTrigger
+import { Button } from './Button'; 
 
-// Parent Select component to manage dropdown state and context
+
 const Select = ({ value, onValueChange, children }) => {
   const [isOpen, setIsOpen] = useState(false);
   const selectRef = useRef(null);
@@ -80,7 +80,7 @@ const SelectItem = ({ children, value, onValueChange, setIsOpen }) => {
   return (
     <div
       onClick={handleClick}
-      // Increased hover background intensity to gray-200 for better visibility
+     
       className="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-2 pr-8 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-gray-200"
     >
       {children}

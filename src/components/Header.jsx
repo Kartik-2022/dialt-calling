@@ -1,38 +1,32 @@
 // src/components/Header.jsx
 import React from 'react';
-import { useAuth } from '../context/AuthContext'; // Import useAuth hook
-import { LogOut, LayoutDashboard } from 'lucide-react'; // Example icons
-import { NavLink } from 'react-router-dom'; // Import NavLink for navigation
+import { LogOut, Plus } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom'; // Import Link
 
 const Header = () => {
-  const { logout } = useAuth(); // Get the logout function from AuthContext
+  const { logout } = useAuth();
 
   return (
-    <header className="bg-white shadow-md py-4 px-6 flex items-center justify-between sticky top-0 z-50 rounded-b-xl">
+    <header className="flex items-center justify-between p-4 bg-white shadow-md">
       <div className="flex items-center space-x-4">
-        <div className="text-xl font-bold text-gray-800">SMOOTHIRE</div>
-        {/* Navigation Links */}
-        <nav className="hidden md:flex space-x-6">
-          <NavLink
-            to="/dashboard"
-            className={({ isActive }) =>
-              `text-gray-600 hover:text-indigo-600 flex items-center space-x-1 ${isActive ? 'font-semibold text-indigo-600' : ''}`
-            }
-          >
-            <LayoutDashboard className="h-4 w-4" />
-            <span>Dashboard</span>
-          </NavLink>
-        </nav>
+        <span className="text-xl font-bold text-gray-800">SMOOTHIRE</span>
       </div>
-
       <div className="flex items-center space-x-4">
-        {/* Logout Button */}
-        <button
-          onClick={logout} // Use the logout function from AuthContext
-          className="flex items-center space-x-1 text-red-600 hover:text-red-800 font-medium px-3 py-2 rounded-md transition duration-150 ease-in-out bg-red-50 hover:bg-red-100"
+        
+        <Link
+          to="/add-entry" 
+          className="flex items-center px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-100 rounded-md hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
         >
-          <LogOut className="h-4 w-4" />
-          <span>Logout</span>
+          <Plus className="w-4 h-4 mr-2" />
+          + Entry
+        </Link>
+        <button
+          onClick={logout}
+          className="flex items-center px-4 py-2 text-sm font-medium text-red-600 bg-red-100 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+        >
+          <LogOut className="w-4 h-4 mr-2" />
+          Logout
         </button>
       </div>
     </header>

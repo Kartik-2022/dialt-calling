@@ -1,46 +1,74 @@
 // src/context/AuthContext.jsx
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-// Import existing token management functions from token-interceptor.js
 import { getToken, setToken, removeToken } from '../http/token-interceptor';
 
-// Create the Auth Context
 const AuthContext = createContext(null);
 
 /**
- * AuthProvider component manages the authentication state (isAuthenticated, login/logout).
- * It uses the existing getToken, setToken, and removeToken from token-interceptor.js.
- *
- * @param {object} { children } - React children to be rendered within the provider's scope.
+ * @param {object} props 
+ * @param {React.ReactNode} props.children 
  */
-export const AuthProvider = ({ children }) => {
-  // State to determine if the user is authenticated. Initialize from current token presence.
-  const [isAuthenticated, setIsAuthenticated] = useState(!!getToken());
 
-  // useNavigate hook for programmatic navigation
+
+export const AuthProvider = ({ children }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(!!getToken());
   const navigate = useNavigate();
 
-  /**
-   * Logs in a user by setting authentication status and navigating.
-   * Note: The actual token setting in localStorage happens in http-calls.js's login function.
-   * This function only updates the AuthContext state.
-   */
-  const login = () => { // Simplified: does not need newToken param if http-calls already sets it
-    setIsAuthenticated(true);
-    navigate('/dashboard'); // Navigate to the dashboard after successful login
-  };
+  const login = useCallback(async (email, password) => {
+    try {
+      const response = await fetch('https://api-dev.smoothire.com/api/v1/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-  /**
-   * Logs out a user by removing the token and updating authentication status, then navigates.
-   */
-  const logout = () => {
-    removeToken(); // Use the existing removeToken function
+      let data;
+      const contentType = response.headers.get('content-type');
+
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        
+        const textResponse = await response.text();
+        
+        if (textResponse.trim().startsWith('<') && textResponse.trim().endsWith('>')) {
+          
+          data = { message: 'An unexpected server error occurred during login. Please try again later.' };
+        } else {
+         
+          data = { message: textResponse || `Server responded with status ${response.status} ${response.statusText}` };
+        }
+      }
+
+      if (!response.ok) {
+        throw new Error(data.message || `Login failed with status: ${response.status}.`);
+      }
+
+      const { token } = data;
+      if (token) {
+        setToken(token);
+        setIsAuthenticated(true);
+        navigate('/dashboard');
+      } else {
+        throw new Error('Login successful, but no token received in response.');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setIsAuthenticated(false);
+      removeToken();
+      throw error;
+    }
+  }, [navigate]);
+
+  const logout = useCallback(() => {
+    removeToken();
     setIsAuthenticated(false);
-    navigate('/login'); // Navigate to the login page after logout
-  };
+    navigate('/login');
+  }, [navigate]);
 
-  // Effect to re-evaluate authentication status if local storage token changes externally
-  // This helps keep state in sync if a token is manually deleted from browser storage.
   useEffect(() => {
     const handleStorageChange = () => {
       const currentToken = getToken();
@@ -54,15 +82,14 @@ export const AuthProvider = ({ children }) => {
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, [isAuthenticated]); // Only re-run if isAuthenticated state itself changes
+  }, [isAuthenticated]);
 
-  // Context value to be provided to consumers
-  const contextValue = {
+  const contextValue = React.useMemo(() => ({
     isAuthenticated,
-    login, // This is the AuthContext's login function
+    login,
     logout,
-    getToken, // Expose getToken from token-interceptor.js for direct use if needed (e.g., DashboardPage)
-  };
+    getToken,
+  }), [isAuthenticated, login, logout]);
 
   return (
     <AuthContext.Provider value={contextValue}>
@@ -71,11 +98,6 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-/**
- * Custom hook to consume the authentication context.
- * Throws an error if used outside of an AuthProvider.
- * @returns {object} The authentication context value (isAuthenticated, login, logout, getToken).
- */
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {

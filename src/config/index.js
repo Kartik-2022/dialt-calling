@@ -1,9 +1,9 @@
 // src/config/index.js
 
-// Assuming your BASE_URL is defined here, keep it.
+
 export const BASE_URL = "https://api-dev.smoothire.com/api/v1";
 
-// Moved from src/features/dashboard/Dashboard.jsx
+
 export const STATIC_USERS_OPTIONS = [
     {label: "All", value: "All"},
     {label: "Alex Sharma", value: "5f327acb6aba6010978bd1b2"},
@@ -28,3 +28,30 @@ export const STATIC_TAGS_OPTIONS = [
     {label: "Shared To Client", value: "Shared To Client"},
     {label: "Out Of India", value: "Out Of India"},
 ];
+
+
+// Placeholder Regex Configurations (You will provide the final regex)
+export const RegexConfig = {
+  name: /^[A-Za-z\s.'-]+$/, // Allows letters, spaces, dots, apostrophes, hyphens
+  email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, // Basic email format
+  phone: /^\+?[0-9\s-()]{7,20}$/, // Basic international phone format (adjust as needed)
+  linkedin: /^(https?:\/\/)?(www\.)?linkedin\.com\/.*$/i, // Basic LinkedIn URL
+  // Add more regex as needed for other fields like location, etc.
+};
+
+// UI Messages for form validation and submission
+export const UI_MESSAGES = {
+  REQUIRED_FIELD: (fieldName) => `${fieldName} is required.`,
+  INVALID_FORMAT: (fieldName) => `Invalid ${fieldName} format.`,
+  EMAIL_INVALID: "Please enter a valid email address.",
+  PHONE_INVALID: "Please enter a valid phone number.",
+  LINKEDIN_INVALID: "Please enter a valid LinkedIn profile URL.",
+  NAME_INVALID: "Name can only contain letters, spaces, dots, apostrophes, and hyphens.",
+  API_ERROR: "An unexpected error occurred. Please try again.",
+  SUBMIT_SUCCESS: "Entry created successfully!",
+  SUBMIT_ERROR: "Failed to create entry. Please check your inputs and try again.",
+  FORM_INVALID: "Please fill out all required fields correctly.",
+};
+
+// DUMMY API DELAY (for simulating network latency in development)
+export const DUMMY_API_DELAY_MS = 500; // 0.5 seconds

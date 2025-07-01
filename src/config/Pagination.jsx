@@ -4,9 +4,6 @@ import React from 'react';
 import { Button } from '../components/ui/Button'; 
 
 /**
- * Pagination Component
- * Renders pagination controls (previous, next, page numbers).
- *
  * @param {object} props - Component props.
  * @param {number} props.currentPage - The current active page number (1-indexed).
  * @param {number} props.totalItems - The total number of items across all pages.
@@ -16,12 +13,12 @@ import { Button } from '../components/ui/Button';
 const Pagination = ({ currentPage, totalItems, itemsPerPage, onPageChange }) => {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
-  // Generate page numbers to display, keeping a reasonable range around the current page
+  
   const getPageNumbers = () => {
     const pageNumbers = [];
-    const maxPageButtons = 5; // Max number of page buttons to show at once
+    const maxPageButtons = 5; 
 
-    // Always show first page
+   
     if (totalPages > 0) {
       pageNumbers.push(1);
     }
@@ -36,22 +33,22 @@ const Pagination = ({ currentPage, totalItems, itemsPerPage, onPageChange }) => 
         startPage = Math.max(2, totalPages - maxPageButtons + 1);
     }
 
-    // Add ellipsis if needed after page 1
+    
     if (startPage > 2) {
       pageNumbers.push('...');
     }
 
-    // Add middle page numbers
+   
     for (let i = startPage; i <= endPage; i++) {
       pageNumbers.push(i);
     }
 
-    // Add ellipsis if needed before last page
+    
     if (endPage < totalPages - 1) {
       pageNumbers.push('...');
     }
 
-    // Always show last page if more than 1 page
+    
     if (totalPages > 1 && !pageNumbers.includes(totalPages)) {
       pageNumbers.push(totalPages);
     }
@@ -60,12 +57,12 @@ const Pagination = ({ currentPage, totalItems, itemsPerPage, onPageChange }) => 
   };
 
   if (totalPages <= 1) {
-    return null; // Don't render pagination if there's only one page or no items
+    return null; 
   }
 
   return (
     <div className="flex justify-center items-center space-x-2 py-4">
-      {/* Previous Button */}
+      
       <Button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
@@ -74,7 +71,7 @@ const Pagination = ({ currentPage, totalItems, itemsPerPage, onPageChange }) => 
         Previous
       </Button>
 
-      {/* Page Numbers */}
+      
       {getPageNumbers().map((page, index) => (
         <React.Fragment key={index}>
           {page === '...' ? (
@@ -94,7 +91,7 @@ const Pagination = ({ currentPage, totalItems, itemsPerPage, onPageChange }) => 
         </React.Fragment>
       ))}
 
-      {/* Next Button */}
+      
       <Button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}

@@ -1,18 +1,16 @@
 // src/routes/PrivateRoute.jsx
-import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext'; 
-
+import React from "react";
+import { Navigate, Outlet } from "react-router-dom";
+import { getToken } from "../http/token-interceptor";
 
 const PrivateRoute = () => {
-  const { isAuthenticated } = useAuth(); 
+  const token = getToken();
+  console.log({ token });
 
- 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />; 
-  }
+  //if (!token) {
+    //return <Navigate to="/login" replace />;
+ // }
 
-  
   return <Outlet />;
 };
 
