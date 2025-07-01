@@ -42,15 +42,18 @@ const initialFormFields = {
   }
 
 
-const NewEntryForm = ({ onSuccessfulSubmission }) => {
+const NewEntryForm = ({ onSuccess, toggle }) => {
   const navigate = useNavigate();
 
   const [formFields, setFormFields] = useState(initialFormFields);
-
   const [isDirty, setIsDirty] = useState(initialIsDirty);
-
   const [errors, setErrors] = useState(initialErrors);
 
+
+  const  _onClose = () => {
+   _resetFormFields();
+    toggle();
+  };
 
   const _resetFormFields = useCallback(() => {
     setFormFields(initialFormFields)
@@ -60,10 +63,6 @@ const NewEntryForm = ({ onSuccessfulSubmission }) => {
     setSubmitMessage(null);
   }, []);
 
-  const _onClose = () => {
-    // toggle();
-    _resetFormFields()
-  }
   const [loading, setLoading] = useState(false);
   const [submitMessage, setSubmitMessage] = useState(null);
 
@@ -164,37 +163,36 @@ const NewEntryForm = ({ onSuccessfulSubmission }) => {
         }
       });
 
-      return { newErrors, updatedIsDirty, isFormValid };
+      setErrors(newErrors)
+      setIsDirty(updatedIsDirty)
+
+      return isFormValid;
     },
     []
   );
 
-  const _onChangeFormField = useCallback((key, value) => {
-  
+  const _onChangeFormField = (key, value) => {
+    console.log({key, value});
     const newFormFields = { ...formFields };
-    const newIsDirty = { ...isDirty }; 
+    const newIsDirty = { ...isDirty };
+
     newFormFields[key] = value;
     newIsDirty[key] = true;
-
     if (key === 'tags') {
         const selectedTagLabels = (value || []).map(tag => tag.label);
-        newFormFields.comment = selectedTagLabels.join(', '); 
-        newIsDirty.comment = true; 
-    } else if (key === 'comment') {
-        newFormFields.comment = value;
+        newFormFields.comment = selectedTagLabels.join(', ');
         newIsDirty.comment = true;
     }
     setFormFields(newFormFields);
     setIsDirty(newIsDirty);
-    const { newErrors } = _validateFormField({currentFormfields: newFormFields, currentIsDirty: newIsDirty});
-    setErrors(newErrors);
 
-    setSubmitMessage(null);
-  }, [formFields, isDirty, _validateFormField]);
+    _validateFormField({currentFormfields: newFormFields, currentIsDirty: newIsDirty});
+    // setSubmitMessage(null); // Keeping as per manager's code
+  };
 
   const _markAllIsDirty = useCallback(() => {
-    return new Promise((resolve) => { 
-      const newIsDirty = deepClone(isDirty); 
+    return new Promise((resolve) => {
+      const newIsDirty = deepClone(isDirty);
       Object.keys(newIsDirty).forEach((key) => {
         if (typeof newIsDirty[key] === 'boolean') {
           newIsDirty[key] = true;
@@ -205,42 +203,43 @@ const NewEntryForm = ({ onSuccessfulSubmission }) => {
     });
   }, [isDirty]);
 
-
-  const resetFormFields = useCallback(() => {
-    setFormFields({
-      name: "",
-      email: "",
-      phone: "",
-      countryCode: "+91",
-      linkedinProfileLink: "",
-      jobFunction: null,
-      tags: [],
-      comment: "",
-    });
-    setIsDirty({
-      name: false,
-      email: false,
-      phone: false,
-      countryCode: false,
-      linkedinProfileLink: false,
-      jobFunction: false,
-      tags: false,
-      comment: false,
-    });
-    setErrors(initialErrors);
-    setLoading(false);
-    setSubmitMessage(null);
-    if (onSuccessfulSubmission) {
-      onSuccessfulSubmission();
-    }
-  }, [onSuccessfulSubmission]);
+  // Keeping commented out as per manager's code
+  // const resetFormFields = useCallback(() => {
+  //   setFormFields({
+  //     name: "",
+  //     email: "",
+  //     phone: "",
+  //     countryCode: "+91",
+  //     linkedinProfileLink: "",
+  //     jobFunction: null,
+  //     tags: [],
+  //     comment: "",
+  //   });
+  //   setIsDirty({
+  //     name: false,
+  //     email: false,
+  //     phone: false,
+  //     countryCode: false,
+  //     linkedinProfileLink: false,
+  //     jobFunction: false,
+  //     tags: false,
+  //     comment: false,
+  //   });
+  //   setErrors(initialErrors);
+  //   setLoading(false);
+  //   setSubmitMessage(null);
+  //   if (onSuccess) {
+  //     onSuccess();
+  //   }
+  // }, [onSuccess]);
 
   const createPayload = useCallback(() => {
-    const selectedTagsLabels = formFields.tags.map(tag => tag.label);
+    const selectedTagsLabels = (formFields.tags || []).map(tag => tag.label);
+
     let finalNote = formFields.comment.trim();
 
     if (selectedTagsLabels.length > 0) {
-      const tagsString = selectedTagLabels.join(', ');
+      const tagsString = selectedTagsLabels.join(', ');
       if (finalNote) {
         finalNote = `${tagsString}. ${finalNote}`;
       } else {
@@ -261,25 +260,21 @@ const NewEntryForm = ({ onSuccessfulSubmission }) => {
     };
   }, [formFields]);
 
-
   const _onSubmit = async (e) => {
     if (e) e.preventDefault();
 
-    setSubmitMessage(null);
-    setErrors(deepClone(initialErrors));
+    setSubmitMessage(null); // RESTORED: Clear previous messages on new submission attempt
+    setErrors(deepClone(initialErrors)); // RESTORED: Clear previous errors on new submission attempt
     setLoading(true);
 
     const currentIsDirtyState = await _markAllIsDirty();
-    const { isFormValid, newErrors, updatedIsDirty } = _validateFormField({
+    const isFormValid = _validateFormField({
       currentFormfields: formFields,
       currentIsDirty: currentIsDirtyState,
     });
 
-    setErrors(newErrors);
-    setIsDirty(updatedIsDirty);
-
     if (!isFormValid) {
-      setSubmitMessage({ type: "error", text: UI_MESSAGES.FORM_INVALID });
+      setSubmitMessage({ type: "error", text: UI_MESSAGES.FORM_INVALID }); // RESTORED: Show form invalid message
       setLoading(false);
       return;
     }
@@ -288,8 +283,8 @@ const NewEntryForm = ({ onSuccessfulSubmission }) => {
     console.log("API Payload:", payload);
 
     try {
-      
-      const token = getToken(); 
+
+      const token = getToken();
 
       const response = await fetch('https://api-dev.smoothire.com/api/v1/create/activity/external/user', {
          method: 'POST',
@@ -321,15 +316,13 @@ const NewEntryForm = ({ onSuccessfulSubmission }) => {
         throw new Error(data.message || `API Error: ${response.statusText}`);
       }
 
-      setSubmitMessage({ type: "success", text: UI_MESSAGES.SUBMIT_SUCCESS });
-      if (onSuccessfulSubmission) {
-        onSuccessfulSubmission();
-      }
-      _resetFormFields();
+      setSubmitMessage({ type: "success", text: UI_MESSAGES.SUBMIT_SUCCESS }); // RESTORED: Show success message
 
+      if (onSuccess) onSuccess(); // Changed from onSuccessfulSubmission to onSuccess
+      _onClose(); // modal close with state reset
     } catch (apiError) {
       console.error("API call failed for New Entry:", apiError);
-      setSubmitMessage({ type: "error", text: apiError.message || UI_MESSAGES.API_ERROR });
+      setSubmitMessage({ type: "error", text: apiError.message || UI_MESSAGES.API_ERROR }); // RESTORED: Show API error message
       setErrors(prev => ({ ...prev, submit: apiError.message || UI_MESSAGES.API_ERROR }));
     } finally {
       setLoading(false);
@@ -358,7 +351,7 @@ const NewEntryForm = ({ onSuccessfulSubmission }) => {
             type="text"
             value={formFields.name}
             onChange={(e) => _onChangeFormField('name', e.target.value)}
-            onBlur={() => _onChangeFormField('name', formFields.name)}
+            // onBlur={() => _onChangeFormField('name', formFields.name)} // Keeping commented out as per manager's code
             placeholder="Enter name"
             className={errors.name ? "border-red-500" : ""}
           />
@@ -527,7 +520,7 @@ const NewEntryForm = ({ onSuccessfulSubmission }) => {
           <div className="flex justify-end space-x-3 pt-4">
             <button
               type="button"
-              onClick={resetFormFields}
+              onClick={_onClose}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
               disabled={loading}
             >

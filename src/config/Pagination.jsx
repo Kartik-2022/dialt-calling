@@ -3,13 +3,7 @@ import React from 'react';
 // Corrected path for Button from src/config/ to src/components/ui/Button
 import { Button } from '../components/ui/Button'; 
 
-/**
- * @param {object} props - Component props.
- * @param {number} props.currentPage - The current active page number (1-indexed).
- * @param {number} props.totalItems - The total number of items across all pages.
- * @param {number} props.itemsPerPage - The maximum number of items to display per page.
- * @param {function(number): void} props.onPageChange - Callback function when a page changes.
- */
+
 const Pagination = ({ currentPage, totalItems, itemsPerPage, onPageChange }) => {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 

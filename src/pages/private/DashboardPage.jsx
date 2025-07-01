@@ -57,22 +57,25 @@ const DashboardPage = () => {
   const [filters, setFilters] = useState(initialFilters);
   const searchRef = useRef(null);
 
-  const { logout } = useAuth(); // Destructure logout from useAuth
+  const { logout } = useAuth(); 
 
-  // State to control the Add Entry Modal visibility
-  const [isAddEntryModalOpen, setIsAddEntryModalOpen] = useState(false);
+  
+  const [isAddEntryModalOpen, setIsAddEntryModalOpen] = useState({
+    isOpen: false,
+    data: null
+  });
 
-  // Function to toggle the Add Entry Modal
-  const toggleAddEntryModal = useCallback(() => {
-    setIsAddEntryModalOpen(prev => !prev);
+  
+  const _toggleAddEntryModal = useCallback((isOpen = false, data = null) => {
+    setIsAddEntryModalOpen({isOpen, data});
   }, []);
 
-  // Function to refresh data after a successful new entry submission
+  
   const handleNewEntrySuccess = useCallback(() => {
-    // Reset filters to initial state and re-fetch data
+    
     setFilters(initialFilters);
-    _fetchActivityLogs(initialFilters, 1); // Fetch data for page 1
-  }, []); // No dependencies needed if initialFilters is constant
+    _fetchActivityLogs(initialFilters, 1); 
+  }, []); 
 
   const _prepareFiltersForPayload = (filtersData) => {
     const newPayload = {
@@ -368,15 +371,15 @@ const DashboardPage = () => {
   };
 
   return (
-    // Restored outer div for layout
+    
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Header /> {/* Header restored */}
+      <Header /> 
 
       <div className="flex-grow w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* Add Entry Button */}
+        
         <div className="flex justify-end mb-4">
           <button
-            onClick={toggleAddEntryModal} // This should open the modal
+            onClick={() => _toggleAddEntryModal(true)} 
             className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
           >
             + Add New Entry
@@ -483,7 +486,7 @@ const DashboardPage = () => {
       {/* Add Entry Modal */}
       <AddEntryModal
         isOpen={isAddEntryModalOpen}
-        toggle={toggleAddEntryModal}
+        toggle={_toggleAddEntryModal}
         onSuccess={handleNewEntrySuccess}
       />
     </div>
