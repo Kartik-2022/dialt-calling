@@ -13,14 +13,7 @@ const Header = () => {
         <span className="text-xl font-bold text-gray-800">SMOOTHIRE</span>
       </div>
       <div className="flex items-center space-x-4">
-        
-        <Link
-          to="/add-entry" 
-          className="flex items-center px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-100 rounded-md hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Entry
-        </Link>
+  
         <button
           onClick={logout}
           className="flex items-center px-4 py-2 text-sm font-medium text-red-600 bg-red-100 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"

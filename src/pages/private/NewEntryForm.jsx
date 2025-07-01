@@ -4,8 +4,20 @@ import Select from 'react-select';
 import { Input } from '../../components/ui/Input';
 import { STATIC_JOB_FUNCTIONS_OPTIONS, STATIC_TAGS_OPTIONS, RegexConfig, UI_MESSAGES, DUMMY_API_DELAY_MS } from '../../config';
 import { deepClone } from '../../utils/deepClone';
-import { getToken } from '../../http/token-interceptor'; // Still needed to get the token for the API call
+import { getToken } from '../../http/token-interceptor';
 import { useNavigate } from 'react-router-dom';
+
+const initialErrors = {
+    name: null,
+    email: null,
+    phone: null,
+    countryCode: null,
+    linkedinProfileLink: null,
+    jobFunction: null,
+    tags: null,
+    comment: null,
+    submit: null,
+};
 
 const initialFormFields = {
     name: "",
@@ -29,6 +41,7 @@ const initialFormFields = {
     comment: false,
   }
 
+
 const NewEntryForm = ({ onSuccessfulSubmission }) => {
   const navigate = useNavigate();
 
@@ -36,27 +49,19 @@ const NewEntryForm = ({ onSuccessfulSubmission }) => {
 
   const [isDirty, setIsDirty] = useState(initialIsDirty);
 
-  const [errors, setErrors] = useState({
-    name: null,
-    email: null,
-    phone: null,
-    countryCode: null,
-    linkedinProfileLink: null,
-    jobFunction: null,
-    tags: null,
-    comment: null,
-    submit: null,
-  });
+  const [errors, setErrors] = useState(initialErrors);
 
 
-  const _resetFormFields = () => {
+  const _resetFormFields = useCallback(() => {
     setFormFields(initialFormFields)
     setIsDirty(initialIsDirty)
     setErrors({})
-  }
+    setLoading(false);
+    setSubmitMessage(null);
+  }, []);
 
   const _onClose = () => {
-    toggle();
+    // toggle();
     _resetFormFields()
   }
   const [loading, setLoading] = useState(false);
@@ -64,13 +69,15 @@ const NewEntryForm = ({ onSuccessfulSubmission }) => {
 
   const _validateFormField = useCallback(
     ({ currentFormfields, currentIsDirty }) => {
-      const newErrors = deepClone(errors); // Retaining deepClone(errors) as per your provided snippet
-      const updatedIsDirty = deepClone(currentIsDirty); // Retaining deepClone(currentIsDirty) as per your provided snippet
+      const newErrors = deepClone(initialErrors);
+      const updatedIsDirty = deepClone(currentIsDirty);
       let isFormValid = true;
+
+      newErrors.submit = null;
 
 
       Object.keys(currentFormfields).forEach((key) => {
-        if (updatedIsDirty[key] ) { // This condition ensures validation runs only for dirty fields (or all on submit via _markAllIsDirty)
+        if (updatedIsDirty[key] ) {
           switch (key) {
             case "name": {
               if (!currentFormfields[key]?.trim()?.length) {
@@ -159,7 +166,7 @@ const NewEntryForm = ({ onSuccessfulSubmission }) => {
 
       return { newErrors, updatedIsDirty, isFormValid };
     },
-
+    []
   );
 
   const _onChangeFormField = useCallback((key, value) => {
@@ -179,11 +186,12 @@ const NewEntryForm = ({ onSuccessfulSubmission }) => {
     }
     setFormFields(newFormFields);
     setIsDirty(newIsDirty);
-    const { newErrors } = _validateFormField(newFormFields, newIsDirty);
+    const { newErrors } = _validateFormField({currentFormfields: newFormFields, currentIsDirty: newIsDirty});
     setErrors(newErrors);
 
     setSubmitMessage(null);
   }, [formFields, isDirty, _validateFormField]);
+
   const _markAllIsDirty = useCallback(() => {
     return new Promise((resolve) => { 
       const newIsDirty = deepClone(isDirty); 
@@ -219,22 +227,20 @@ const NewEntryForm = ({ onSuccessfulSubmission }) => {
       tags: false,
       comment: false,
     });
-    setErrors({
-      name: null, email: null, phone: null, countryCode: null,
-      linkedinProfileLink: null, jobFunction: null, tags: null, comment: null,
-      submit: null,
-    });
+    setErrors(initialErrors);
     setLoading(false);
     setSubmitMessage(null);
-    navigate('/dashboard');
-  }, [navigate]);
+    if (onSuccessfulSubmission) {
+      onSuccessfulSubmission();
+    }
+  }, [onSuccessfulSubmission]);
 
   const createPayload = useCallback(() => {
     const selectedTagsLabels = formFields.tags.map(tag => tag.label);
     let finalNote = formFields.comment.trim();
 
     if (selectedTagsLabels.length > 0) {
-      const tagsString = selectedTagsLabels.join(', ');
+      const tagsString = selectedTagLabels.join(', ');
       if (finalNote) {
         finalNote = `${tagsString}. ${finalNote}`;
       } else {
@@ -260,11 +266,7 @@ const NewEntryForm = ({ onSuccessfulSubmission }) => {
     if (e) e.preventDefault();
 
     setSubmitMessage(null);
-    setErrors(deepClone({
-      name: null, email: null, phone: null, countryCode: null,
-      linkedinProfileLink: null, jobFunction: null, tags: null, comment: null,
-      submit: null,
-    }));
+    setErrors(deepClone(initialErrors));
     setLoading(true);
 
     const currentIsDirtyState = await _markAllIsDirty();
@@ -298,17 +300,32 @@ const NewEntryForm = ({ onSuccessfulSubmission }) => {
          body: JSON.stringify(payload),
       });
 
-      const data = await response.json();
+      let data;
+      const contentType = response.headers.get('content-type');
 
-      if (!response.ok) {
-         throw new Error(data.message || `API Error: ${response.statusText}`);
+      if (response.ok) {
+        if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            data = { message: "Operation successful!" };
+        }
+      } else {
+        const errorResponseText = await response.text();
+        try {
+            data = JSON.parse(errorResponseText);
+            console.error("API Error Response (JSON):", data);
+        } catch (jsonError) {
+            data = { message: errorResponseText || `Server responded with status ${response.status} ${response.statusText}` };
+            console.error("API Error Response (Text):", data.message);
+        }
+        throw new Error(data.message || `API Error: ${response.statusText}`);
       }
 
       setSubmitMessage({ type: "success", text: UI_MESSAGES.SUBMIT_SUCCESS });
       if (onSuccessfulSubmission) {
         onSuccessfulSubmission();
       }
-      resetFormFields();
+      _resetFormFields();
 
     } catch (apiError) {
       console.error("API call failed for New Entry:", apiError);
@@ -321,117 +338,111 @@ const NewEntryForm = ({ onSuccessfulSubmission }) => {
 
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center py-6">
-      <div className="w-full max-w-2xl bg-white p-8 rounded-lg shadow-md mx-auto">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">New Entry</h2>
-        <form onSubmit={_onSubmit} className="space-y-4">
-          {submitMessage && (
-            <div
-              className={`p-3 rounded-md text-sm ${
-                submitMessage.type === "success" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-              }`}
-            >
-              {submitMessage.text}
-            </div>
-          )}
-
-          {/* Name Field */}
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Name <span className="text-red-500">*</span></label>
-            <Input
-              id="name"
-              type="text"
-              value={formFields.name}
-              onChange={(e) => _onChangeFormField('name', e.target.value)}
-              onBlur={() => _onChangeFormField('name', formFields.name)}
-              placeholder="Enter name"
-              className={errors.name ? "border-red-500" : ""}
-            />
-            {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
+    <div className="w-full">
+      <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">New Entry</h2>
+      <form onSubmit={_onSubmit} className="space-y-4">
+        {submitMessage && (
+          <div
+            className={`p-3 rounded-md text-sm ${
+              submitMessage.type === "success" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+            }`}
+          >
+            {submitMessage.text}
           </div>
+        )}
 
-          {/* Email Field */}
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email <span className="text-red-500">*</span></label>
-            <Input
-              id="email"
-              type="email"
-              value={formFields.email}
-              onChange={(e) => _onChangeFormField('email', e.target.value)}
-              onBlur={() => _onChangeFormField('email', formFields.email)}
-              placeholder="Enter email"
-              className={errors.email ? "border-red-500" : ""}
-            />
-            {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
-          </div>
-
-          {/* Phone Field */}
-          <div className="grid grid-cols-3 gap-2">
-            <div className="col-span-1">
-              <label htmlFor="countryCode" className="block text-sm font-medium text-gray-700 mb-1">Country Code <span className="text-red-500">*</span></label>
-              <Input
-                id="countryCode"
-                type="text"
-                value={formFields.countryCode}
-                onChange={(e) => _onChangeFormField('countryCode', e.target.value)}
-                onBlur={() => _onChangeFormField('countryCode', formFields.countryCode)}
-                placeholder="+91"
-                className={errors.countryCode ? "border-red-500" : ""}
-              />
-              {errors.countryCode && <p className="mt-1 text-sm text-red-600">{errors.countryCode}</p>}
-            </div>
-            <div className="col-span-2">
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">Phone <span className="text-red-500">*</span></label>
-              <Input
-                id="phone"
-                type="tel"
-                value={formFields.phone}
-                onChange={(e) => _onChangeFormField('phone', e.target.value)}
-                onBlur={() => _onChangeFormField('phone', formFields.phone)}
-                placeholder="Enter phone number"
-                className={errors.phone ? "border-red-500" : ""}
-            />
-            {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
-          </div>
+        <div>
+          <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Name <span className="text-red-500">*</span></label>
+          <Input
+            id="name"
+            type="text"
+            value={formFields.name}
+            onChange={(e) => _onChangeFormField('name', e.target.value)}
+            onBlur={() => _onChangeFormField('name', formFields.name)}
+            placeholder="Enter name"
+            className={errors.name ? "border-red-500" : ""}
+          />
+          {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
         </div>
 
-          {/* Location Field - Placeholder */}
-          <div>
-            <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-            <Input
-              id="location"
-              type="text"
-              placeholder="Enter location (data to be provided)"
-            />
-          </div>
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email <span className="text-red-500">*</span></label>
+          <Input
+            id="email"
+            type="email"
+            value={formFields.email}
+            onChange={(e) => _onChangeFormField('email', e.target.value)}
+            onBlur={() => _onChangeFormField('email', formFields.email)}
+            placeholder="Enter email"
+            className={errors.email ? "border-red-500" : ""}
+          />
+          {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
+        </div>
 
-          {/* Job Function Select */}
-          <div>
-            <label htmlFor="jobFunction" className="block text-sm font-medium text-gray-700 mb-1">Job Function <span className="text-red-500">*</span></label>
-            <Select
-              id="jobFunction"
-              options={STATIC_JOB_FUNCTIONS_OPTIONS}
-              value={formFields.jobFunction}
-              onChange={(selectedOption) => _onChangeFormField('jobFunction', selectedOption)}
-              onBlur={() => _onChangeFormField('jobFunction', formFields.jobFunction)}
-              isClearable={true}
-              placeholder="Select job function"
-              classNamePrefix="react-select"
-              className={errors.jobFunction ? "border border-red-500 rounded-md" : ""}
-              styles={{
-                control: (provided, state) => ({
-                  ...provided,
-                  backgroundColor: 'white',
-                  borderColor: errors.jobFunction ? '#ef4444' : (state.isFocused ? '#6366f1' : '#d1d5db'),
-                  boxShadow: errors.jobFunction ? '0 0 0 1px #ef4444' : (state.isFocused ? '0 0 0 1px #6366f1' : 'none'),
-                  '&:hover': {
-                    borderColor: state.isFocused ? '#6366f1' : '#a0aec0',
-                  },
-                  color: '#1f2937',
-                }),
-                singleValue: (provided) => ({ ...provided, color: '#1f2937' }),
-                placeholder: (provided) => ({ ...provided, color: '#9ca3af' }),
-                menu: (provided) => ({ ...provided, backgroundColor: 'white', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }),
+        <div className="grid grid-cols-3 gap-2">
+          <div className="col-span-1">
+            <label htmlFor="countryCode" className="block text-sm font-medium text-gray-700 mb-1">Country Code <span className="text-red-500">*</span></label>
+            <Input
+              id="countryCode"
+              type="text"
+              value={formFields.countryCode}
+              onChange={(e) => _onChangeFormField('countryCode', e.target.value)}
+              onBlur={() => _onChangeFormField('countryCode', formFields.countryCode)}
+              placeholder="+91"
+              className={errors.countryCode ? "border-red-500" : ""}
+            />
+            {errors.countryCode && <p className="mt-1 text-sm text-red-600">{errors.countryCode}</p>}
+          </div>
+          <div className="col-span-2">
+            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">Phone <span className="text-red-500">*</span></label>
+            <Input
+              id="phone"
+              type="tel"
+              value={formFields.phone}
+              onChange={(e) => _onChangeFormField('phone', e.target.value)}
+              onBlur={() => _onChangeFormField('phone', formFields.phone)}
+              placeholder="Enter phone number"
+              className={errors.phone ? "border-red-500" : ""}
+          />
+          {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
+        </div>
+      </div>
+
+        <div>
+          <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+          <Input
+            id="location"
+            type="text"
+            placeholder="Enter location (data to be provided)"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="jobFunction" className="block text-sm font-medium text-gray-700 mb-1">Job Function <span className="text-red-500">*</span></label>
+          <Select
+            id="jobFunction"
+            options={STATIC_JOB_FUNCTIONS_OPTIONS}
+            value={formFields.jobFunction}
+            onChange={(selectedOption) => _onChangeFormField('jobFunction', selectedOption)}
+            onBlur={() => _onChangeFormField('jobFunction', formFields.jobFunction)}
+            isClearable={true}
+            placeholder="Select job function"
+            classNamePrefix="react-select"
+            className={errors.jobFunction ? "border border-red-500 rounded-md" : ""}
+            styles={{
+              control: (provided, state) => ({
+                ...provided,
+                backgroundColor: 'white',
+                borderColor: errors.jobFunction ? '#ef4444' : (state.isFocused ? '#6366f1' : '#d1d5db'),
+                boxShadow: errors.jobFunction ? '0 0 0 1px #ef4444' : (state.isFocused ? '0 0 0 1px #6366f1' : 'none'),
+                '&:hover': {
+                  borderColor: state.isFocused ? '#6366f1' : '#a0aec0',
+                },
+                color: '#1f2937',
+              }),
+              singleValue: (provided) => ({ ...provided, color: '#1f2937' }),
+              placeholder: (provided) => ({ ...provided, color: '#9ca3af' }),
+              menu: (provided) => ({ ...provided, backgroundColor: 'white', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }),
                 option: (provided, state) => ({
                   ...provided,
                   backgroundColor: state.isFocused ? '#e0e7ff' : 'white',
@@ -445,7 +456,6 @@ const NewEntryForm = ({ onSuccessfulSubmission }) => {
             {errors.jobFunction && <p className="mt-1 text-sm text-red-600">{errors.jobFunction}</p>}
           </div>
 
-          {/* LinkedIn Profile Link */}
           <div>
             <label htmlFor="linkedinProfileLink" className="block text-sm font-medium text-gray-700 mb-1">LinkedIn Profile</label>
             <Input
@@ -460,7 +470,6 @@ const NewEntryForm = ({ onSuccessfulSubmission }) => {
             {errors.linkedinProfileLink && <p className="mt-1 text-sm text-red-600">{errors.linkedinProfileLink}</p>}
           </div>
 
-          {/* Tags Select */}
           <div>
             <label htmlFor="tags" className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
             <Select
@@ -482,26 +491,24 @@ const NewEntryForm = ({ onSuccessfulSubmission }) => {
                   '&:hover': {
                     borderColor: state.isFocused ? '#6366f1' : '#a0aec0',
                   },
-                  color: '#1f2937',
-                }),
-                multiValue: (provided) => ({ ...provided, backgroundColor: '#e0e7ff', color: '#1f2937' }),
-                multiValueLabel: (provided) => ({ ...provided, color: '#1f2937' }),
-                placeholder: (provided) => ({ ...provided, color: '#9ca3af' }),
-                menu: (provided) => ({ ...provided, backgroundColor: 'white', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }),
-                option: (provided, state) => ({
-                  ...provided,
-                  backgroundColor: state.isFocused ? '#e0e7ff' : 'white',
-                  color: '#1f2937',
-                  '&:active': {
-                    backgroundColor: '#c7d2fe',
-                  },
+                  multiValue: (provided) => ({ ...provided, backgroundColor: '#e0e7ff', color: '#1f2937' }),
+                  multiValueLabel: (provided) => ({ ...provided, color: '#1f2937' }),
+                  placeholder: (provided) => ({ ...provided, color: '#9ca3af' }),
+                  menu: (provided) => ({ ...provided, backgroundColor: 'white', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }),
+                  option: (provided, state) => ({
+                    ...provided,
+                    backgroundColor: state.isFocused ? '#e0e7ff' : 'white',
+                    color: '#1f2937',
+                    '&:active': {
+                      backgroundColor: '#c7d2fe',
+                    },
+                  }),
                 }),
               }}
             />
             {errors.tags && <p className="mt-1 text-sm text-red-600">{errors.tags}</p>}
           </div>
 
-          {/* Comment Field */}
           <div>
             <label htmlFor="comment" className="block text-sm font-medium text-gray-700 mb-1">Comment</label>
             <textarea
@@ -517,7 +524,6 @@ const NewEntryForm = ({ onSuccessfulSubmission }) => {
             {errors.comment && <p className="mt-1 text-sm text-red-600">{errors.comment}</p>}
           </div>
 
-          {/* Form Actions */}
           <div className="flex justify-end space-x-3 pt-4">
             <button
               type="button"
@@ -543,7 +549,6 @@ const NewEntryForm = ({ onSuccessfulSubmission }) => {
           </div>
         </form>
       </div>
-    </div>
   );
 };
 

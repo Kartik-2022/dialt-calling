@@ -19,9 +19,9 @@ export default function Modal({ isOpen, onClose, title, children }) {
 
   return (
     // Fixed overlay that covers the entire screen
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 py-8"> {/* Added py-8 for vertical spacing */}
       {/* Modal content container */}
-      <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative mx-4"> {/* Added mx-4 for mobile spacing */}
+      <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-6 relative mx-4 max-h-[90vh] overflow-y-auto"> {/* Adjusted max-w, added max-h and overflow */}
         {/* Close Button */}
         <button
           onClick={onClose}
