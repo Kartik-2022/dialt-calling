@@ -7,10 +7,7 @@ import { deepClone } from '../../utils/deepClone';
 import { getToken } from '../../http/token-interceptor'; // Still needed to get the token for the API call
 import { useNavigate } from 'react-router-dom';
 
-const NewEntryForm = ({ onSuccessfulSubmission }) => {
-  const navigate = useNavigate();
-
-  const [formFields, setFormFields] = useState({
+const initialFormFields = {
     name: "",
     email: "",
     phone: "",
@@ -19,9 +16,9 @@ const NewEntryForm = ({ onSuccessfulSubmission }) => {
     jobFunction: null,
     tags: [],
     comment: "",
-  });
+}
 
-  const [isDirty, setIsDirty] = useState({
+  const initialIsDirty = {
     name: false,
     email: false,
     phone: false,
@@ -30,7 +27,14 @@ const NewEntryForm = ({ onSuccessfulSubmission }) => {
     jobFunction: false,
     tags: false,
     comment: false,
-  });
+  }
+
+const NewEntryForm = ({ onSuccessfulSubmission }) => {
+  const navigate = useNavigate();
+
+  const [formFields, setFormFields] = useState(initialFormFields);
+
+  const [isDirty, setIsDirty] = useState(initialIsDirty);
 
   const [errors, setErrors] = useState({
     name: null,
@@ -44,19 +48,29 @@ const NewEntryForm = ({ onSuccessfulSubmission }) => {
     submit: null,
   });
 
+
+  const _resetFormFields = () => {
+    setFormFields(initialFormFields)
+    setIsDirty(initialIsDirty)
+    setErrors({})
+  }
+
+  const _onClose = () => {
+    toggle();
+    _resetFormFields()
+  }
   const [loading, setLoading] = useState(false);
   const [submitMessage, setSubmitMessage] = useState(null);
 
   const _validateFormField = useCallback(
     ({ currentFormfields, currentIsDirty }) => {
-      const newErrors = deepClone(errors);
-      const updatedIsDirty = deepClone(currentIsDirty);
+      const newErrors = deepClone(errors); // Retaining deepClone(errors) as per your provided snippet
+      const updatedIsDirty = deepClone(currentIsDirty); // Retaining deepClone(currentIsDirty) as per your provided snippet
       let isFormValid = true;
 
-      newErrors.submit = null;
 
       Object.keys(currentFormfields).forEach((key) => {
-        if (updatedIsDirty[key] || (currentIsDirty && currentIsDirty[key] === true)) {
+        if (updatedIsDirty[key] ) { // This condition ensures validation runs only for dirty fields (or all on submit via _markAllIsDirty)
           switch (key) {
             case "name": {
               if (!currentFormfields[key]?.trim()?.length) {
@@ -143,142 +157,36 @@ const NewEntryForm = ({ onSuccessfulSubmission }) => {
         }
       });
 
-      if (!currentFormfields.name?.trim()?.length) {
-        newErrors.name = newErrors.name || UI_MESSAGES.REQUIRED_FIELD("Name");
-        isFormValid = false;
-      } else if (!RegexConfig.name.test(currentFormfields.name.trim())) {
-          newErrors.name = newErrors.name || UI_MESSAGES.NAME_INVALID;
-          isFormValid = false;
-      }
-
-      if (!currentFormfields.email?.trim()?.length) {
-        newErrors.email = newErrors.email || UI_MESSAGES.REQUIRED_FIELD("Email");
-        isFormValid = false;
-      } else if (!RegexConfig.email.test(currentFormfields.email.trim())) {
-          newErrors.email = newErrors.email || UI_MESSAGES.EMAIL_INVALID;
-          isFormValid = false;
-      }
-
-      if (!currentFormfields.phone?.trim()?.length) {
-        newErrors.phone = newErrors.phone || UI_MESSAGES.REQUIRED_FIELD("Phone");
-        isFormValid = false;
-      } else if (!RegexConfig.phone.test(currentFormfields.phone.trim())) {
-          newErrors.phone = newErrors.phone || UI_MESSAGES.PHONE_INVALID;
-          isFormValid = false;
-      }
-
-      if (!currentFormfields.jobFunction) {
-        newErrors.jobFunction = newErrors.jobFunction || UI_MESSAGES.REQUIRED_FIELD("Job Function");
-        isFormValid = false;
-      }
-      if (!currentFormfields.countryCode?.trim()?.length) {
-        newErrors.countryCode = newErrors.countryCode || UI_MESSAGES.REQUIRED_FIELD("Country Code");
-        isFormValid = false;
-      }
-
-      if (currentFormfields.linkedinProfileLink?.trim()?.length > 0 && !RegexConfig.linkedin.test(currentFormfields.linkedinProfileLink.trim())) {
-          newErrors.linkedinProfileLink = newErrors.linkedinProfileLink || UI_MESSAGES.LINKEDIN_INVALID;
-          isFormValid = false;
-      }
-
       return { newErrors, updatedIsDirty, isFormValid };
     },
-    [errors]
+
   );
 
   const _onChangeFormField = useCallback((key, value) => {
-    setFormFields(prevFormFields => {
-      let updatedValue = value;
-      let newComment = prevFormFields.comment;
+  
+    const newFormFields = { ...formFields };
+    const newIsDirty = { ...isDirty }; 
+    newFormFields[key] = value;
+    newIsDirty[key] = true;
 
-      if (key === 'jobFunction' && value && typeof value === 'object' && 'value' in value) {
-          updatedValue = value;
-      } else if (key === 'tags') {
-          const selectedTagLabels = (value || []).map(tag => tag.label);
-          const currentCommentText = prevFormFields.comment;
-
-          const existingTagsPart = prevFormFields.tags.map(tag => tag.label).join(', ');
-          let userTypedComment = currentCommentText;
-
-          if (existingTagsPart && currentCommentText.startsWith(existingTagsPart)) {
-              userTypedComment = currentCommentText.substring(existingTagsPart.length).trim();
-              if (userTypedComment.startsWith('.')) {
-                  userTypedComment = userTypedComment.substring(1).trim();
-              }
-          }
-
-          const newTagsPart = selectedTagLabels.join(', ');
-
-          if (newTagsPart && userTypedComment) {
-              newComment = `${newTagsPart}. ${userTypedComment}`;
-          } else if (newTagsPart) {
-              newComment = newTagsPart;
-          } else {
-              newComment = userTypedComment;
-          }
-
-          updatedValue = value || [];
-      } else if (key === 'tags' && !value) {
-          updatedValue = [];
-      } else if (key === 'comment') {
-          newComment = value;
-          updatedValue = value;
-      }
-
-
-      const updatedFormFields = { ...prevFormFields, [key]: updatedValue };
-      if (key === 'tags' || key === 'comment') {
-          updatedFormFields.comment = newComment;
-      }
-      return updatedFormFields;
-    });
-
-    setIsDirty(prevIsDirty => {
-      const updatedIsDirty = { ...prevIsDirty, [key]: true };
-
-      const tempFormFieldsForValidation = { ...formFields, [key]: value };
-      if (key === 'tags') {
-          const selectedTagLabels = (value || []).map(tag => tag.label);
-          const currentCommentText = formFields.comment;
-
-          const existingTagsPart = formFields.tags.map(tag => tag.label).join(', ');
-          let userTypedComment = currentCommentText;
-          if (existingTagsPart && currentCommentText.startsWith(existingTagsPart)) {
-              userTypedComment = currentCommentText.substring(existingTagsPart.length).trim();
-              if (userTypedComment.startsWith('.')) {
-                  userTypedComment = userTypedComment.substring(1).trim();
-              }
-          }
-          const newTagsPart = selectedTagLabels.join(', ');
-          let calculatedCommentForValidation;
-          if (newTagsPart && userTypedComment) {
-              calculatedCommentForValidation = `${newTagsPart}. ${userTypedComment}`;
-          } else if (newTagsPart) {
-              calculatedCommentForValidation = newTagsPart;
-          } else {
-              calculatedCommentForValidation = userTypedComment;
-          }
-          tempFormFieldsForValidation.comment = calculatedCommentForValidation;
-      } else if (key === 'comment') {
-          tempFormFieldsForValidation.comment = value;
-      }
-
-
-      const { newErrors, updatedIsDirty: validatedIsDirty } = _validateFormField({
-        currentFormfields: tempFormFieldsForValidation,
-        currentIsDirty: updatedIsDirty,
-      });
-
-      setErrors(newErrors);
-      return validatedIsDirty;
-    });
+    if (key === 'tags') {
+        const selectedTagLabels = (value || []).map(tag => tag.label);
+        newFormFields.comment = selectedTagLabels.join(', '); 
+        newIsDirty.comment = true; 
+    } else if (key === 'comment') {
+        newFormFields.comment = value;
+        newIsDirty.comment = true;
+    }
+    setFormFields(newFormFields);
+    setIsDirty(newIsDirty);
+    const { newErrors } = _validateFormField(newFormFields, newIsDirty);
+    setErrors(newErrors);
 
     setSubmitMessage(null);
-  }, [_validateFormField, formFields]);
-
+  }, [formFields, isDirty, _validateFormField]);
   const _markAllIsDirty = useCallback(() => {
-    return new Promise((resolve) => {
-      const newIsDirty = deepClone(isDirty);
+    return new Promise((resolve) => { 
+      const newIsDirty = deepClone(isDirty); 
       Object.keys(newIsDirty).forEach((key) => {
         if (typeof newIsDirty[key] === 'boolean') {
           newIsDirty[key] = true;
@@ -288,6 +196,7 @@ const NewEntryForm = ({ onSuccessfulSubmission }) => {
       resolve(newIsDirty);
     });
   }, [isDirty]);
+
 
   const resetFormFields = useCallback(() => {
     setFormFields({

@@ -1,10 +1,11 @@
 // src/pages/private/DashboardPage.jsx
-import React, { useState, useEffect, useRef } from "react";
-// Adjust paths for components now that DashboardPage is in a subfolder
+import React, { useState, useEffect, useRef, useCallback } from "react";
+// Corrected import paths for components (relative to src/pages/private/)
+import Header from "../../components/Header";
 import FiltersCard from "../../components/FiltersCard";
 import CallRecordsTable from "../../components/CallRecordsTable";
-import Header from "../../components/Header"; // Header import restored
-import Pagination from "../../config/Pagination";
+import Pagination from "../../config/Pagination"; // Pagination is in config folder
+import AddEntryModal from "../../components/AddEntryModal"; // Import the new modal wrapper
 
 import { getAllActiviteLogs } from "../../http/http-calls";
 import { getToken } from "../../http/token-interceptor";
@@ -15,7 +16,7 @@ import {
   STATIC_TAGS_OPTIONS,
 } from "../../config/index";
 
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/AuthContext"; // Corrected AuthContext path
 
 /**
  * @typedef {object} CallRecord
@@ -53,11 +54,25 @@ const DashboardPage = () => {
     totalCount: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
-
   const [filters, setFilters] = useState(initialFilters);
   const searchRef = useRef(null);
 
-  const { logout } = useAuth();
+  const { logout } = useAuth(); // Destructure logout from useAuth
+
+  // State to control the Add Entry Modal visibility
+  const [isAddEntryModalOpen, setIsAddEntryModalOpen] = useState(false);
+
+  // Function to toggle the Add Entry Modal
+  const toggleAddEntryModal = useCallback(() => {
+    setIsAddEntryModalOpen(prev => !prev);
+  }, []);
+
+  // Function to refresh data after a successful new entry submission
+  const handleNewEntrySuccess = useCallback(() => {
+    // Reset filters to initial state and re-fetch data
+    setFilters(initialFilters);
+    _fetchActivityLogs(initialFilters, 1); // Fetch data for page 1
+  }, []); // No dependencies needed if initialFilters is constant
 
   const _prepareFiltersForPayload = (filtersData) => {
     const newPayload = {
@@ -261,7 +276,7 @@ const DashboardPage = () => {
     });
   };
 
-  const _fetchActivityLogs = async (currentFilters, pageToFetch = 1) => {
+  const _fetchActivityLogs = useCallback(async (currentFilters, pageToFetch = 1) => {
     try {
       setIsLoading(true);
 
@@ -293,16 +308,15 @@ const DashboardPage = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [logout]);
 
-  const initialFetch = async () => {
+  const initialFetch = useCallback(() => {
     _fetchActivityLogs(initialFilters, initialFilters.page);
-  };
+  }, [_fetchActivityLogs]);
 
   useEffect(() => {
     initialFetch();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [initialFetch]);
 
 
   const _handleFilterChange = (key, value) => {
@@ -354,11 +368,21 @@ const DashboardPage = () => {
   };
 
   return (
-    
+    // Restored outer div for layout
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Header /> 
+      <Header /> {/* Header restored */}
 
       <div className="flex-grow w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        {/* Add Entry Button */}
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={toggleAddEntryModal} // This should open the modal
+            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          >
+            + Add New Entry
+          </button>
+        </div>
+
         <FiltersCard
           filters={filters}
           onFilterChange={_handleFilterChange}
@@ -379,20 +403,20 @@ const DashboardPage = () => {
               height="16"
             >
               <path
-                d="M32 3C35.8083 3 39.5794 3.75011 43.0978 5.20749C46.6163 6.66488 49.8132 8.80101 52.5061 11.4939C55.199 14.1868 57.3351 17.3837 58.7925 20.9022C60.2499 24.4206 61 28.1917 61 32C61 35.8083 60.2499 39.5794 58.7925 43.0978C57.3351 46.6163 55.199 49.8132 52.5061 52.5061C49.8132 55.199 46.6163 57.3351 43.0978 58.7925C39.5794 60.2499 35.8083 61 32 61C28.1917 61 24.4206 60.2499 20.9022 58.7925C17.3837 57.3351 14.1868 55.199 11.4939 52.5061C8.801 49.8132 6.66487 46.6163 5.20749 43.0978C3.7501 39.5794 3 35.8083 3 32L32 3Z"
-            stroke="currentColor"
-            strokeWidth="5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          ></path>
-          <path
-            d="M32 3C36.5778 3 41.0906 4.08374 45.1692 6.16256C49.2477 8.24138 52.7762 11.2562 55.466 14.9605C58.1558 18.6647 59.9304 22.9531 60.6448 27.4748C61.3591 31.9965 60.9928 36.6232 59.5759 40.9762"
-            stroke="currentColor"
-            strokeWidth="5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="text-gray-900"
-          ></path>
+                d="M32 3C35.8083 3 39.5794 3.75011 43.0978 5.20749C46.6163 6.66488 49.8132 8.80101 52.5061 11.4939C55.199 14.1868 57.3351 17.3837 58.7925 20.9022C60.2499 24.4206 61 28.1917 61 32C61 35.8083 60.2499 39.5794 58.7925 43.0978C57.3351 46.6163 55.199 49.8132 52.5061 52.5061C49.8132 55.199 46.6163 57.3351 43.0978 58.7925C39.5794 60.2499 35.8083 61 32 61C28.1917 61 24.4206 60.2499 20.9022 58.7925C17.3837 57.3351 14.1868 55.199 11.4939 52.5061C8.801 49.8132 6.66487 46.6163 5.20749 43.0978C6.66489 17.3837 8.80101 14.1868 11.4939 11.4939C14.1868 8.80099 17.3838 6.66487 20.9022 5.20749C24.4206 3.7501 28.1917 3 32 3L32 3Z"
+                stroke="currentColor"
+                strokeWidth="5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              ></path>
+              <path
+                d="M32 3C36.5778 3 41.0906 4.08374 45.1692 6.16256C49.2477 8.24138 52.7762 11.2562 55.466 14.9605C58.1558 18.6647 59.9304 22.9531 60.6448 27.4748C61.3591 31.9965 60.9928 36.6232 59.5759 40.9762"
+                stroke="currentColor"
+                strokeWidth="5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-gray-900"
+              ></path>
             </svg>
           ) : null}
         </h3>
@@ -410,21 +434,21 @@ const DashboardPage = () => {
               height="24"
             >
               <path
-                d="M32 3C35.8083 3 39.5794 3.75011 43.0978 5.20749C46.6163 6.66488 49.8132 8.80101 52.5061 11.4939C55.199 14.1868 57.3351 17.3837 58.7925 20.9022C60.2499 24.4206 61 28.1917 61 32C61 35.8083 60.2499 39.5794 58.7925 43.0978C57.3351 46.6163 55.199 49.8132 52.5061 52.5061C49.8132 55.199 46.6163 57.3351 43.0978 58.7925C39.5794 60.2499 35.8083 61 32 61C28.1917 61 24.4206 60.2499 20.9022 58.7925C17.3837 57.3351 14.1868 55.199 11.4939 52.5061C8.801 49.8132 6.66487 46.6163 5.20749 43.0978C3.7501 39.5794 3 35.8083 3 32C3 28.1917 3.75011 24.4206 5.2075 20.9022C6.66489 17.3837 8.80101 14.1868 11.4939 11.4939C14.1868 8.80099 17.3838 6.66487 20.9022 5.20749C24.4206 3.7501 28.1917 3 32 3L32 3Z"
-              stroke="currentColor"
-              strokeWidth="5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            ></path>
-            <path
-              d="M32 3C36.5778 3 41.0906 4.08374 45.1692 6.16256C49.2477 8.24138 52.7762 11.2562 55.466 14.9605C58.1558 18.6647 59.9304 22.9531 60.6448 27.4748C61.3591 31.9965 60.9928 36.6232 59.5759 40.9762"
-              stroke="currentColor"
-              strokeWidth="5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-gray-900"
-            ></path>
-          </svg>
+                d="M32 3C35.8083 3 39.5794 3.75011 43.0978 5.20749C46.6163 6.66488 49.8132 8.80101 52.5061 11.4939C55.199 14.1868 57.3351 17.3837 58.7925 20.9022C60.2499 24.4206 61 28.1917 61 32C61 35.8083 60.2499 39.5794 58.7925 43.0978C57.3351 46.6163 55.199 49.8132 52.5061 52.5061C49.8132 55.199 46.6163 57.3351 43.0978 58.7925C39.5794 60.2499 35.8083 61 32 61C28.1917 61 24.4206 60.2499 20.9022 58.7925C17.3837 57.3351 14.1868 55.199 11.4939 52.5061C8.801 49.8132 6.66487 46.6163 5.20749 43.0978C6.66489 17.3837 8.80101 14.1868 11.4939 11.4939C14.1868 8.80099 17.3838 6.66487 20.9022 5.20749C24.4206 3.7501 28.1917 3 32 3L32 3Z"
+                stroke="currentColor"
+                strokeWidth="5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              ></path>
+              <path
+                d="M32 3C36.5778 3 41.0906 4.08374 45.1692 6.16256C49.2477 8.24138 52.7762 11.2562 55.466 14.9605C58.1558 18.6647 59.9304 22.9531 60.6448 27.4748C61.3591 31.9965 60.9928 36.6232 59.5759 40.9762"
+                stroke="currentColor"
+                strokeWidth="5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-gray-900"
+              ></path>
+            </svg>
           </div>
         ) : (
           <div className="text-center py-4 text-gray-500">
@@ -440,6 +464,7 @@ const DashboardPage = () => {
         />
       </div>
 
+      {/* Footer restored */}
       <footer className="w-full bg-white border-t border-gray-200 py-4 px-6 flex justify-between items-center text-xs text-gray-500 mt-auto">
         <div>
           &copy; 2025 Smoothire.{" "}
@@ -454,6 +479,13 @@ const DashboardPage = () => {
           </a>
         </div>
       </footer>
+
+      {/* Add Entry Modal */}
+      <AddEntryModal
+        isOpen={isAddEntryModalOpen}
+        toggle={toggleAddEntryModal}
+        onSuccess={handleNewEntrySuccess}
+      />
     </div>
   );
 };
