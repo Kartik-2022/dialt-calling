@@ -30,16 +30,16 @@ export const STATIC_TAGS_OPTIONS = [
 ];
 
 
-// Placeholder Regex Configurations (You will provide the final regex)
+
 export const RegexConfig = {
-  name: /^[A-Za-z\s.'-]+$/, // Allows letters, spaces, dots, apostrophes, hyphens
-  email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, // Basic email format
-  phone: /^\+?[0-9\s-()]{7,20}$/, // Basic international phone format (adjust as needed)
-  linkedin: /^(https?:\/\/)?(www\.)?linkedin\.com\/.*$/i, // Basic LinkedIn URL
-  // Add more regex as needed for other fields like location, etc.
+  name: /^[A-Za-z\s.'-]+$/, 
+  email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, 
+  phone: /^\+?[0-9\s-()]{7,20}$/, 
+  linkedin: /^(https?:\/\/)?(www\.)?linkedin\.com\/.*$/i, 
+  
 };
 
-// UI Messages for form validation and submission
+
 export const UI_MESSAGES = {
   REQUIRED_FIELD: (fieldName) => `${fieldName} is required.`,
   INVALID_FORMAT: (fieldName) => `Invalid ${fieldName} format.`,
@@ -53,5 +53,5 @@ export const UI_MESSAGES = {
   FORM_INVALID: "Please fill out all required fields correctly.",
 };
 
-// DUMMY API DELAY (for simulating network latency in development)
-export const DUMMY_API_DELAY_MS = 500; // 0.5 seconds
+
+export const DUMMY_API_DELAY_MS = 500; 

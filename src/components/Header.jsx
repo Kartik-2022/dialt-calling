@@ -19,7 +19,7 @@ const Header = () => {
           className="flex items-center px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-100 rounded-md hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
         >
           <Plus className="w-4 h-4 mr-2" />
-          + Entry
+          Entry
         </Link>
         <button
           onClick={logout}

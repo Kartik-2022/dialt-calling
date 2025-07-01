@@ -5,11 +5,10 @@ import { getToken } from "../http/token-interceptor";
 
 const PrivateRoute = () => {
   const token = getToken();
-  console.log({ token });
 
-  //if (!token) {
-    //return <Navigate to="/login" replace />;
- // }
+  if (!token) {
+    return <Navigate to="/login" replace />;
+ }
 
   return <Outlet />;
 };

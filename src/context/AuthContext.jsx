@@ -5,11 +5,6 @@ import { getToken, setToken, removeToken } from '../http/token-interceptor';
 
 const AuthContext = createContext(null);
 
-/**
- * @param {object} props 
- * @param {React.ReactNode} props.children 
- */
-
 
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(!!getToken());
@@ -17,12 +12,24 @@ export const AuthProvider = ({ children }) => {
 
   const login = useCallback(async (email, password) => {
     try {
+      
+      const payload = {
+        handle: email, 
+        password: password,
+        deviceDetails: {
+        
+          ipAddress: "127.0.0.1", 
+          name: "Web Browser", 
+        }
+      };
+
+
       const response = await fetch('https://api-dev.smoothire.com/api/v1/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(payload),
       });
 
       let data;
@@ -31,14 +38,10 @@ export const AuthProvider = ({ children }) => {
       if (contentType && contentType.includes('application/json')) {
         data = await response.json();
       } else {
-        
         const textResponse = await response.text();
-        
         if (textResponse.trim().startsWith('<') && textResponse.trim().endsWith('>')) {
-          
           data = { message: 'An unexpected server error occurred during login. Please try again later.' };
         } else {
-         
           data = { message: textResponse || `Server responded with status ${response.status} ${response.statusText}` };
         }
       }

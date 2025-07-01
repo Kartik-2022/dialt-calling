@@ -1,25 +1,12 @@
 // src/pages/private/NewEntryForm.jsx
 import React, { useState, useCallback } from 'react';
 import Select from 'react-select';
-// Adjust paths for components now that NewEntryForm is in a subfolder
 import { Input } from '../../components/ui/Input';
 import { STATIC_JOB_FUNCTIONS_OPTIONS, STATIC_TAGS_OPTIONS, RegexConfig, UI_MESSAGES, DUMMY_API_DELAY_MS } from '../../config';
 import { deepClone } from '../../utils/deepClone';
-import { getToken } from '../../http/token-interceptor';
+import { getToken } from '../../http/token-interceptor'; // Still needed to get the token for the API call
 import { useNavigate } from 'react-router-dom';
 
-/**
- * New Entry Form Component
- * Handles form state, validation, and submission for creating new leads/candidates.
- * Follows a specific coding pattern requested by the manager.
- * This component is self-contained and ready to be integrated into any parent display mechanism (e.g., modal, new page).
- *
- * @param {object} props - Component props.
- * @param {function(): Promise<void>} [props.onSuccessfulSubmission] - Optional: Callback to refresh data in parent (e.g., DashboardPage).
- * This will now also trigger navigation back.
- * @param {function(): void} [props.onClose] - Optional: Callback to close the parent display (e.g., modal).
- * This will now also trigger navigation back.
- */
 const NewEntryForm = ({ onSuccessfulSubmission }) => {
   const navigate = useNavigate();
 
@@ -390,10 +377,8 @@ const NewEntryForm = ({ onSuccessfulSubmission }) => {
     console.log("API Payload:", payload);
 
     try {
-      const token = getToken();
-      if (!token) {
-        throw new Error("Authentication token not found. Please log in.");
-      }
+      
+      const token = getToken(); 
 
       const response = await fetch('https://api-dev.smoothire.com/api/v1/create/activity/external/user', {
          method: 'POST',
@@ -441,7 +426,7 @@ const NewEntryForm = ({ onSuccessfulSubmission }) => {
             </div>
           )}
 
-          
+          {/* Name Field */}
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Name <span className="text-red-500">*</span></label>
             <Input
@@ -456,7 +441,7 @@ const NewEntryForm = ({ onSuccessfulSubmission }) => {
             {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
           </div>
 
-          
+          {/* Email Field */}
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email <span className="text-red-500">*</span></label>
             <Input
@@ -471,7 +456,7 @@ const NewEntryForm = ({ onSuccessfulSubmission }) => {
             {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
           </div>
 
-          
+          {/* Phone Field */}
           <div className="grid grid-cols-3 gap-2">
             <div className="col-span-1">
               <label htmlFor="countryCode" className="block text-sm font-medium text-gray-700 mb-1">Country Code <span className="text-red-500">*</span></label>
@@ -496,22 +481,22 @@ const NewEntryForm = ({ onSuccessfulSubmission }) => {
                 onBlur={() => _onChangeFormField('phone', formFields.phone)}
                 placeholder="Enter phone number"
                 className={errors.phone ? "border-red-500" : ""}
-              />
-              {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
-            </div>
+            />
+            {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
           </div>
+        </div>
 
-          
+          {/* Location Field - Placeholder */}
           <div>
             <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">Location</label>
             <Input
               id="location"
               type="text"
-              placeholder="Enter location"
+              placeholder="Enter location (data to be provided)"
             />
           </div>
 
-         
+          {/* Job Function Select */}
           <div>
             <label htmlFor="jobFunction" className="block text-sm font-medium text-gray-700 mb-1">Job Function <span className="text-red-500">*</span></label>
             <Select
