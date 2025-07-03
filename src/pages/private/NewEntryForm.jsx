@@ -6,6 +6,7 @@ import { STATIC_JOB_FUNCTIONS_OPTIONS, STATIC_TAGS_OPTIONS, RegexConfig, UI_MESS
 import { deepClone } from '../../utils/deepClone';
 import { makePostRequest } from '../../http/http-service';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast'
 
 const initialErrors = {
     name: null,
@@ -51,234 +52,225 @@ const NewEntryForm = ({ onSuccess, toggle }) => {
 
 
   const  _onClose = () => {
-   _resetFormFields();
-    toggle();
-  };
-
-  const _resetFormFields = useCallback(() => {
-    setFormFields(initialFormFields)
-    setIsDirty(initialIsDirty)
-    setErrors(initialErrors)
-    setLoading(false);
-    setSubmitMessage(null);
-  }, []);
-
-  const [loading, setLoading] = useState(false);
-  const [submitMessage, setSubmitMessage] = useState(null);
-
-  const _validateFormField = useCallback(
-    ({ currentFormfields, currentIsDirty }) => {
-      const newErrors = deepClone(initialErrors);
-      const updatedIsDirty = deepClone(currentIsDirty);
-      let isFormValid = true;
-
-      newErrors.submit = null;
-
-
-      Object.keys(currentFormfields).forEach((key) => {
-        if (updatedIsDirty[key] ) {
-          switch (key) {
-            case "name": {
-              if (!currentFormfields[key]?.trim()?.length) {
-                newErrors[key] = UI_MESSAGES.REQUIRED_FIELD("Name");
-                isFormValid = false;
-              } else if (!RegexConfig.name.test(currentFormfields[key].trim())) {
-                newErrors[key] = UI_MESSAGES.NAME_INVALID;
-                isFormValid = false;
-              } else {
-                newErrors[key] = null;
-                updatedIsDirty[key] = false;
-              }
-              break;
-            }
-            case "email": {
-              if (!currentFormfields[key]?.trim()?.length) {
-                newErrors[key] = UI_MESSAGES.REQUIRED_FIELD("Email");
-                isFormValid = false;
-              } else if (!RegexConfig.email.test(currentFormfields[key].trim())) {
-                newErrors[key] = UI_MESSAGES.EMAIL_INVALID;
-                isFormValid = false;
-              } else {
-                newErrors[key] = null;
-                updatedIsDirty[key] = false;
-              }
-              break;
-            }
-            case "phone": {
-              if (!currentFormfields[key]?.trim()?.length) {
-                newErrors[key] = UI_MESSAGES.REQUIRED_FIELD("Phone");
-                isFormValid = false;
-              } else if (!RegexConfig.phone.test(currentFormfields[key].trim())) {
-                newErrors[key] = UI_MESSAGES.PHONE_INVALID;
-                isFormValid = false;
-              } else {
-                newErrors[key] = null;
-                updatedIsDirty[key] = false;
-              }
-              break;
-            }
-            case "countryCode": {
-                if (!currentFormfields[key]?.trim()?.length) {
-                    newErrors[key] = UI_MESSAGES.REQUIRED_FIELD("Country Code");
-                    isFormValid = false;
-                } else {
-                    newErrors[key] = null;
-                    updatedIsDirty[key] = false;
-                }
-                break;
-            }
-            case "linkedinProfileLink": {
-              if (currentFormfields[key]?.trim().length > 0 && !RegexConfig.linkedin.test(currentFormfields[key].trim())) {
-                newErrors[key] = UI_MESSAGES.LINKEDIN_INVALID;
-                isFormValid = false;
-              } else {
-                newErrors[key] = null;
-                updatedIsDirty[key] = false;
-              }
-              break;
-            }
-            case "jobFunction": {
-              if (!currentFormfields[key]) {
-                newErrors[key] = UI_MESSAGES.REQUIRED_FIELD("Job Function");
-                isFormValid = false;
-              } else {
-                newErrors[key] = null;
-                updatedIsDirty[key] = false;
-              }
-              break;
-            }
-            case "comment": {
-                newErrors[key] = null;
-                updatedIsDirty[key] = false;
-                break;
-            }
-            case "tags": {
-                newErrors[key] = null;
-                updatedIsDirty[key] = false;
-                break;
-            }
-            default:
-              break;
-          }
-        }
-      });
-
-      setErrors(newErrors)
-      setIsDirty(updatedIsDirty)
-
-      return isFormValid;
-    },
-    []
-  );
-
-  const _onChangeFormField = (key, value) => {
-    console.log({key, value});
-    const newFormFields = { ...formFields };
-    const newIsDirty = { ...isDirty };
-
-    newFormFields[key] = value;
-    newIsDirty[key] = true;
-    if (key === 'tags') {
-        const tagsArray = Array.isArray(value) ? value : (value ? [value] : []);
-        const selectedTagLabels = tagsArray.map(tag => tag.label);
-        newFormFields.comment = selectedTagLabels.join(', ');
-        newIsDirty.comment = true;
-    }
-    setFormFields(newFormFields);
-    setIsDirty(newIsDirty);
-
-    _validateFormField({currentFormfields: newFormFields, currentIsDirty: newIsDirty});
-  };
-
-  const _markAllIsDirty = useCallback(() => {
-    return new Promise((resolve) => {
-      const newIsDirty = deepClone(isDirty);
-      Object.keys(newIsDirty).forEach((key) => {
-        if (typeof newIsDirty[key] === 'boolean') {
-          newIsDirty[key] = true;
-        }
-      });
-      setIsDirty(newIsDirty);
-      resolve(newIsDirty);
-    });
-  }, [isDirty]);
-
-  const createPayload = useCallback(() => {
-    const tagsToProcess = Array.isArray(formFields.tags) ? formFields.tags : (formFields.tags ? [formFields.tags] : []);
-    const selectedTagsLabels = tagsToProcess.map(tag => tag.label);
-
-    let finalNote = formFields.comment.trim();
-
-    if (selectedTagsLabels.length > 0) {
-      const tagsString = selectedTagsLabels.join(', ');
-      if (finalNote) {
-        finalNote = `${tagsString}. ${finalNote}`;
-      } else {
-        finalNote = tagsString;
-      }
-    }
-
-    return {
-      email: formFields.email.trim(),
-      phone: formFields.phone.trim(),
-      countryCode: formFields.countryCode.trim(),
-      linkedinProfileLink: formFields.linkedinProfileLink.trim() || undefined,
-      name: {
-        first: formFields.name.trim()
-      },
-      _jobFunction: formFields.jobFunction ? formFields.jobFunction.value : undefined,
-      note: finalNote || undefined
-    };
-  }, [formFields]);
-
-  const _onSubmit = async (e) => {
-    if (e) e.preventDefault();
-
-    setSubmitMessage(null);
-    setLoading(true);
-
-    const currentIsDirtyState = await _markAllIsDirty();
-    const isFormValid = _validateFormField({
-      currentFormfields: formFields,
-      currentIsDirty: currentIsDirtyState,
-    });
-
-    if (!isFormValid) {
-      setSubmitMessage({ type: "error", text: UI_MESSAGES.FORM_INVALID });
-      setLoading(false);
-      return;
-    }
-
-    const payload = createPayload();
-    console.log("API Payload:", payload);
-
-    try {
-      const data = await makePostRequest(
-        'https://api-dev.smoothire.com/api/v1/create/activity/external/user',
-        true, 
-        payload
-      );
-      if (onSuccess) onSuccess();
-      _onClose();
-    } finally {
-      setLoading(false);
-    }
-  };
+    _resetFormFields();
+     toggle();
+   };
+ 
+   const _resetFormFields = useCallback(() => {
+     setFormFields(initialFormFields)
+     setIsDirty(initialIsDirty)
+     setErrors(initialErrors)
+     setLoading(false);
+   }, []);
+ 
+   const [loading, setLoading] = useState(false); 
+   const _validateFormField = useCallback(
+     ({ currentFormfields, currentIsDirty }) => {
+       const newErrors = deepClone(initialErrors);
+       const updatedIsDirty = deepClone(currentIsDirty);
+       let isFormValid = true;
+       newErrors.submit = null;
+ 
+ 
+       Object.keys(currentFormfields).forEach((key) => {
+         if (updatedIsDirty[key] ) {
+           switch (key) {
+             case "name": {
+               if (!currentFormfields[key]?.trim()?.length) {
+                 newErrors[key] = UI_MESSAGES.REQUIRED_FIELD("Name");
+                 isFormValid = false;
+               } else if (!RegexConfig.name.test(currentFormfields[key].trim())) {
+                 newErrors[key] = UI_MESSAGES.NAME_INVALID;
+                 isFormValid = false;
+               } else {
+                 newErrors[key] = null;
+                 updatedIsDirty[key] = false;
+               }
+               break;
+             }
+             case "email": {
+               if (!currentFormfields[key]?.trim()?.length) {
+                 newErrors[key] = UI_MESSAGES.REQUIRED_FIELD("Email");
+                 isFormValid = false;
+               } else if (!RegexConfig.email.test(currentFormfields[key].trim())) {
+                 newErrors[key] = UI_MESSAGES.EMAIL_INVALID;
+                 isFormValid = false;
+               } else {
+                 newErrors[key] = null;
+                 updatedIsDirty[key] = false;
+               }
+               break;
+             }
+             case "phone": {
+               if (!currentFormfields[key]?.trim()?.length) {
+                 newErrors[key] = UI_MESSAGES.REQUIRED_FIELD("Phone");
+                 isFormValid = false;
+               } else if (!RegexConfig.phone.test(currentFormfields[key].trim())) {
+                 newErrors[key] = UI_MESSAGES.PHONE_INVALID;
+                 isFormValid = false;
+               } else {
+                 newErrors[key] = null;
+                 updatedIsDirty[key] = false;
+               }
+               break;
+             }
+             case "countryCode": {
+                 if (!currentFormfields[key]?.trim()?.length) {
+                     newErrors[key] = UI_MESSAGES.REQUIRED_FIELD("Country Code");
+                     isFormValid = false;
+                 } else {
+                     newErrors[key] = null;
+                     updatedIsDirty[key] = false;
+                 }
+                 break;
+             }
+             case "linkedinProfileLink": {
+               if (currentFormfields[key]?.trim().length > 0 && !RegexConfig.linkedin.test(currentFormfields[key].trim())) {
+                 newErrors[key] = UI_MESSAGES.LINKEDIN_INVALID;
+                 isFormValid = false;
+               } else {
+                 newErrors[key] = null;
+                 updatedIsDirty[key] = false;
+               }
+               break;
+             }
+             case "jobFunction": {
+               if (!currentFormfields[key]) {
+                 newErrors[key] = UI_MESSAGES.REQUIRED_FIELD("Job Function");
+                 isFormValid = false;
+               } else {
+                 newErrors[key] = null;
+                 updatedIsDirty[key] = false;
+               }
+               break;
+             }
+             case "comment": {
+                 newErrors[key] = null;
+                 updatedIsDirty[key] = false;
+                 break;
+             }
+             case "tags": {
+                 newErrors[key] = null;
+                 updatedIsDirty[key] = false;
+                 break;
+             }
+             default:
+               break;
+           }
+         }
+       });
+ 
+       setErrors(newErrors)
+       setIsDirty(updatedIsDirty)
+ 
+       return isFormValid;
+     },
+     []
+   );
+ 
+   const _onChangeFormField = (key, value) => {
+     console.log({key, value});
+     const newFormFields = { ...formFields };
+     const newIsDirty = { ...isDirty };
+ 
+     newFormFields[key] = value;
+     newIsDirty[key] = true;
+     if (key === 'tags') {
+         const tagsArray = Array.isArray(value) ? value : (value ? [value] : []);
+         const selectedTagLabels = tagsArray.map(tag => tag.label);
+         newFormFields.comment = selectedTagLabels.join(', ');
+         newIsDirty.comment = true;
+     }
+     setFormFields(newFormFields);
+     setIsDirty(newIsDirty);
+ 
+     _validateFormField({currentFormfields: newFormFields, currentIsDirty: newIsDirty});
+   };
+ 
+   const _markAllIsDirty = useCallback(() => {
+     return new Promise((resolve) => {
+       const newIsDirty = deepClone(isDirty);
+       Object.keys(newIsDirty).forEach((key) => {
+         if (typeof newIsDirty[key] === 'boolean') {
+           newIsDirty[key] = true;
+         }
+       });
+       setIsDirty(newIsDirty);
+       resolve(newIsDirty);
+     });
+   }, [isDirty]);
+ 
+   const createPayload = useCallback(() => {
+     const tagsToProcess = Array.isArray(formFields.tags) ? formFields.tags : (formFields.tags ? [formFields.tags] : []);
+     const selectedTagsLabels = tagsToProcess.map(tag => tag.label);
+ 
+     let finalNote = formFields.comment.trim();
+ 
+     if (selectedTagsLabels.length > 0) {
+       const tagsString = selectedTagsLabels.join(', ');
+       if (finalNote) {
+         finalNote = `${tagsString}. ${finalNote}`;
+       } else {
+         finalNote = tagsString;
+       }
+     }
+ 
+     return {
+       email: formFields.email.trim(),
+       phone: formFields.phone.trim(),
+       countryCode: formFields.countryCode.trim(),
+       linkedinProfileLink: formFields.linkedinProfileLink.trim() || undefined,
+       name: {
+         first: formFields.name.trim()
+       },
+       _jobFunction: formFields.jobFunction ? formFields.jobFunction.value : undefined,
+       note: finalNote || undefined
+     };
+   }, [formFields]);
+ 
+   const _onSubmit = async (e) => {
+     if (e) e.preventDefault();
+     setLoading(true);
+ 
+     const currentIsDirtyState = await _markAllIsDirty();
+     const isFormValid = _validateFormField({
+       currentFormfields: formFields,
+       currentIsDirty: currentIsDirtyState,
+     });
+ 
+     if (!isFormValid) {
+       toast.error(UI_MESSAGES.FORM_INVALID);
+       setLoading(false);
+       return;
+     }
+ 
+     const payload = createPayload();
+     console.log("API Payload:", payload);
+ 
+     try {
+       const data = await makePostRequest(
+         'https://api-dev.smoothire.com/api/v1/create/activity/external/user',
+         true,
+         payload
+       );
+ 
+       toast.success(data.message || UI_MESSAGES.SUBMIT_SUCCESS); 
+ 
+       if (onSuccess) onSuccess();
+       _onClose();
+     } catch (apiError) { 
+       toast.error(errorMessage); 
+       setErrors(prev => ({ ...prev, submit: errorMessage }));
+     } finally {
+       setLoading(false);
+     }
+   };
 
   return (
     <div className="w-full">
       <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">New Entry</h2>
       <form onSubmit={_onSubmit} className="space-y-4">
-        {submitMessage && (
-          <div
-            className={`p-3 rounded-md text-sm ${
-              submitMessage.type === "success" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-            }`}
-          >
-            {submitMessage.text}
-          </div>
-        )}
-
+       
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Name <span className="text-red-500">*</span></label>
           <Input

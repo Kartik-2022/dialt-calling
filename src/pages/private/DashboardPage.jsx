@@ -452,7 +452,6 @@ const DashboardPage = () => {
         />
       </div>
 
-      {/* Footer restored */}
       <footer className="w-full bg-white border-t border-gray-200 py-4 px-6 flex justify-between items-center text-xs text-gray-500 mt-auto">
         <div>
           &copy; 2025 Smoothire.{" "}
@@ -468,7 +467,6 @@ const DashboardPage = () => {
         </div>
       </footer>
 
-      {/* Add Entry Modal */}
       <AddEntryModal
         isOpen={isAddEntryModalOpen.isOpen}
         toggle={_toggleAddEntryModal}
