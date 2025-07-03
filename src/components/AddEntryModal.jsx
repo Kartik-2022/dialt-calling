@@ -1,7 +1,7 @@
 // src/components/AddEntryModal.jsx
 import React from 'react';
-import Modal from './Modal'; // Import the generic Modal component from the same directory
-import NewEntryForm from '../pages/private/NewEntryForm'; // Correct path to NewEntryForm within private folder
+import Modal from './Modal';
+import NewEntryForm from '../pages/private/NewEntryForm';
 
 export default function AddEntryModal({ isOpen, toggle, onSuccess }) {
   return (

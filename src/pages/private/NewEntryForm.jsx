@@ -4,7 +4,7 @@ import Select from 'react-select';
 import { Input } from '../../components/ui/Input';
 import { STATIC_JOB_FUNCTIONS_OPTIONS, STATIC_TAGS_OPTIONS, RegexConfig, UI_MESSAGES, DUMMY_API_DELAY_MS } from '../../config';
 import { deepClone } from '../../utils/deepClone';
-import { getToken } from '../../http/token-interceptor';
+import { makePostRequest } from '../../http/http-service';
 import { useNavigate } from 'react-router-dom';
 
 const initialErrors = {
@@ -58,7 +58,7 @@ const NewEntryForm = ({ onSuccess, toggle }) => {
   const _resetFormFields = useCallback(() => {
     setFormFields(initialFormFields)
     setIsDirty(initialIsDirty)
-    setErrors({})
+    setErrors(initialErrors)
     setLoading(false);
     setSubmitMessage(null);
   }, []);
@@ -179,7 +179,8 @@ const NewEntryForm = ({ onSuccess, toggle }) => {
     newFormFields[key] = value;
     newIsDirty[key] = true;
     if (key === 'tags') {
-        const selectedTagLabels = (value || []).map(tag => tag.label);
+        const tagsArray = Array.isArray(value) ? value : (value ? [value] : []);
+        const selectedTagLabels = tagsArray.map(tag => tag.label);
         newFormFields.comment = selectedTagLabels.join(', ');
         newIsDirty.comment = true;
     }
@@ -187,7 +188,6 @@ const NewEntryForm = ({ onSuccess, toggle }) => {
     setIsDirty(newIsDirty);
 
     _validateFormField({currentFormfields: newFormFields, currentIsDirty: newIsDirty});
-    // setSubmitMessage(null); // Keeping as per manager's code
   };
 
   const _markAllIsDirty = useCallback(() => {
@@ -203,38 +203,9 @@ const NewEntryForm = ({ onSuccess, toggle }) => {
     });
   }, [isDirty]);
 
-  // Keeping commented out as per manager's code
-  // const resetFormFields = useCallback(() => {
-  //   setFormFields({
-  //     name: "",
-  //     email: "",
-  //     phone: "",
-  //     countryCode: "+91",
-  //     linkedinProfileLink: "",
-  //     jobFunction: null,
-  //     tags: [],
-  //     comment: "",
-  //   });
-  //   setIsDirty({
-  //     name: false,
-  //     email: false,
-  //     phone: false,
-  //     countryCode: false,
-  //     linkedinProfileLink: false,
-  //     jobFunction: false,
-  //     tags: false,
-  //     comment: false,
-  //   });
-  //   setErrors(initialErrors);
-  //   setLoading(false);
-  //   setSubmitMessage(null);
-  //   if (onSuccess) {
-  //     onSuccess();
-  //   }
-  // }, [onSuccess]);
-
   const createPayload = useCallback(() => {
-    const selectedTagsLabels = (formFields.tags || []).map(tag => tag.label);
+    const tagsToProcess = Array.isArray(formFields.tags) ? formFields.tags : (formFields.tags ? [formFields.tags] : []);
+    const selectedTagsLabels = tagsToProcess.map(tag => tag.label);
 
     let finalNote = formFields.comment.trim();
 
@@ -263,8 +234,7 @@ const NewEntryForm = ({ onSuccess, toggle }) => {
   const _onSubmit = async (e) => {
     if (e) e.preventDefault();
 
-    setSubmitMessage(null); // RESTORED: Clear previous messages on new submission attempt
-    setErrors(deepClone(initialErrors)); // RESTORED: Clear previous errors on new submission attempt
+    setSubmitMessage(null);
     setLoading(true);
 
     const currentIsDirtyState = await _markAllIsDirty();
@@ -274,7 +244,7 @@ const NewEntryForm = ({ onSuccess, toggle }) => {
     });
 
     if (!isFormValid) {
-      setSubmitMessage({ type: "error", text: UI_MESSAGES.FORM_INVALID }); // RESTORED: Show form invalid message
+      setSubmitMessage({ type: "error", text: UI_MESSAGES.FORM_INVALID });
       setLoading(false);
       return;
     }
@@ -283,52 +253,17 @@ const NewEntryForm = ({ onSuccess, toggle }) => {
     console.log("API Payload:", payload);
 
     try {
-
-      const token = getToken();
-
-      const response = await fetch('https://api-dev.smoothire.com/api/v1/create/activity/external/user', {
-         method: 'POST',
-         headers: {
-           'Content-Type': 'application/json',
-           'Authorization': `Bearer ${token}`
-         },
-         body: JSON.stringify(payload),
-      });
-
-      let data;
-      const contentType = response.headers.get('content-type');
-
-      if (response.ok) {
-        if (contentType && contentType.includes('application/json')) {
-            data = await response.json();
-        } else {
-            data = { message: "Operation successful!" };
-        }
-      } else {
-        const errorResponseText = await response.text();
-        try {
-            data = JSON.parse(errorResponseText);
-            console.error("API Error Response (JSON):", data);
-        } catch (jsonError) {
-            data = { message: errorResponseText || `Server responded with status ${response.status} ${response.statusText}` };
-            console.error("API Error Response (Text):", data.message);
-        }
-        throw new Error(data.message || `API Error: ${response.statusText}`);
-      }
-
-      setSubmitMessage({ type: "success", text: UI_MESSAGES.SUBMIT_SUCCESS }); // RESTORED: Show success message
-
-      if (onSuccess) onSuccess(); // Changed from onSuccessfulSubmission to onSuccess
-      _onClose(); // modal close with state reset
-    } catch (apiError) {
-      console.error("API call failed for New Entry:", apiError);
-      setSubmitMessage({ type: "error", text: apiError.message || UI_MESSAGES.API_ERROR }); // RESTORED: Show API error message
-      setErrors(prev => ({ ...prev, submit: apiError.message || UI_MESSAGES.API_ERROR }));
+      const data = await makePostRequest(
+        'https://api-dev.smoothire.com/api/v1/create/activity/external/user',
+        true, 
+        payload
+      );
+      if (onSuccess) onSuccess();
+      _onClose();
     } finally {
       setLoading(false);
     }
   };
-
 
   return (
     <div className="w-full">
@@ -351,7 +286,6 @@ const NewEntryForm = ({ onSuccess, toggle }) => {
             type="text"
             value={formFields.name}
             onChange={(e) => _onChangeFormField('name', e.target.value)}
-            // onBlur={() => _onChangeFormField('name', formFields.name)} // Keeping commented out as per manager's code
             placeholder="Enter name"
             className={errors.name ? "border-red-500" : ""}
           />
@@ -365,7 +299,6 @@ const NewEntryForm = ({ onSuccess, toggle }) => {
             type="email"
             value={formFields.email}
             onChange={(e) => _onChangeFormField('email', e.target.value)}
-            onBlur={() => _onChangeFormField('email', formFields.email)}
             placeholder="Enter email"
             className={errors.email ? "border-red-500" : ""}
           />
@@ -380,7 +313,6 @@ const NewEntryForm = ({ onSuccess, toggle }) => {
               type="text"
               value={formFields.countryCode}
               onChange={(e) => _onChangeFormField('countryCode', e.target.value)}
-              onBlur={() => _onChangeFormField('countryCode', formFields.countryCode)}
               placeholder="+91"
               className={errors.countryCode ? "border-red-500" : ""}
             />
@@ -393,7 +325,6 @@ const NewEntryForm = ({ onSuccess, toggle }) => {
               type="tel"
               value={formFields.phone}
               onChange={(e) => _onChangeFormField('phone', e.target.value)}
-              onBlur={() => _onChangeFormField('phone', formFields.phone)}
               placeholder="Enter phone number"
               className={errors.phone ? "border-red-500" : ""}
           />
@@ -417,8 +348,6 @@ const NewEntryForm = ({ onSuccess, toggle }) => {
             options={STATIC_JOB_FUNCTIONS_OPTIONS}
             value={formFields.jobFunction}
             onChange={(selectedOption) => _onChangeFormField('jobFunction', selectedOption)}
-            onBlur={() => _onChangeFormField('jobFunction', formFields.jobFunction)}
-            isClearable={true}
             placeholder="Select job function"
             classNamePrefix="react-select"
             className={errors.jobFunction ? "border border-red-500 rounded-md" : ""}
@@ -456,7 +385,6 @@ const NewEntryForm = ({ onSuccess, toggle }) => {
               type="url"
               value={formFields.linkedinProfileLink}
               onChange={(e) => _onChangeFormField('linkedinProfileLink', e.target.value)}
-              onBlur={() => _onChangeFormField('linkedinProfileLink', formFields.linkedinProfileLink)}
               placeholder="https://www.linkedin.com/in/profile"
               className={errors.linkedinProfileLink ? "border-red-500" : ""}
             />
@@ -470,9 +398,6 @@ const NewEntryForm = ({ onSuccess, toggle }) => {
               options={STATIC_TAGS_OPTIONS}
               value={formFields.tags}
               onChange={(selectedOptions) => _onChangeFormField('tags', selectedOptions || [])}
-              onBlur={() => _onChangeFormField('tags', formFields.tags)}
-              isMulti
-              isClearable={true}
               placeholder="Select tags"
               classNamePrefix="react-select"
               styles={{
@@ -508,8 +433,6 @@ const NewEntryForm = ({ onSuccess, toggle }) => {
               id="comment"
               value={formFields.comment}
               onChange={(e) => _onChangeFormField('comment', e.target.value)}
-              onBlur={() => _onChangeFormField('comment', formFields.comment)}
-              rows="3"
               placeholder="Add comments or notes..."
               className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-2
                          bg-white text-gray-900 ${errors.comment ? "border-red-500" : ""}`}

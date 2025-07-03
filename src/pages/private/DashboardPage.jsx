@@ -1,11 +1,10 @@
 // src/pages/private/DashboardPage.jsx
 import React, { useState, useEffect, useRef, useCallback } from "react";
-// Corrected import paths for components (relative to src/pages/private/)
 import Header from "../../components/Header";
 import FiltersCard from "../../components/FiltersCard";
 import CallRecordsTable from "../../components/CallRecordsTable";
-import Pagination from "../../config/Pagination"; // Pagination is in config folder
-import AddEntryModal from "../../components/AddEntryModal"; // Import the new modal wrapper
+import Pagination from "../../config/Pagination";
+import AddEntryModal from "../../components/AddEntryModal";
 
 import { getAllActiviteLogs } from "../../http/http-calls";
 import { getToken } from "../../http/token-interceptor";
@@ -16,21 +15,7 @@ import {
   STATIC_TAGS_OPTIONS,
 } from "../../config/index";
 
-import { useAuth } from "../../context/AuthContext"; // Corrected AuthContext path
-
-/**
- * @typedef {object} CallRecord
- * @property {string} id - Unique identifier for the call record
- * @property {string} createdAt - Timestamp of when the record was created (ISO string)
- * @property {string} candidateName - Name of the candidate
- * @property {string} contactDetails - Contact information for the candidate (email/phone combined)
- * @property {string} jobFunction - Job function associated with the call (maps from _candidate._jobFunction.name or _lead._jobFunction.name)
- * @property {string} user - User who made the call (the person who _created_ the activity)
- * @property {string[]} tags - Array of tags associated with the record (maps from 'note')
- * @property {string} status - Call status (e.g., "Answered", "Busy", "Not Reachable") // Derived
- * @property {string} [details] - Optional additional call records data (activityTitle)
- * @property {string} type - 'Lead' or 'Candidate' (maps from isDailyCallingTracker)
- */
+import { useAuth } from "../../context/AuthContext";
 
 const initialFilters = {
   page: 1,
@@ -57,25 +42,25 @@ const DashboardPage = () => {
   const [filters, setFilters] = useState(initialFilters);
   const searchRef = useRef(null);
 
-  const { logout } = useAuth(); 
+  const { logout } = useAuth();
 
-  
+  // State for controlling the Add Entry Modal
   const [isAddEntryModalOpen, setIsAddEntryModalOpen] = useState({
     isOpen: false,
-    data: null
+    data: null // Optional: to pass data to the modal if needed
   });
 
-  
+  // Callback to toggle the Add Entry Modal's visibility
   const _toggleAddEntryModal = useCallback((isOpen = false, data = null) => {
     setIsAddEntryModalOpen({isOpen, data});
   }, []);
 
-  
+  // Callback to execute after a new entry is successfully submitted (e.g., re-fetch data)
   const handleNewEntrySuccess = useCallback(() => {
-    
+    // Reset filters to initial state and re-fetch logs from page 1
     setFilters(initialFilters);
-    _fetchActivityLogs(initialFilters, 1); 
-  }, []); 
+    _fetchActivityLogs(initialFilters, 1);
+  }, []); // Dependency on _fetchActivityLogs ensures it's current
 
   const _prepareFiltersForPayload = (filtersData) => {
     const newPayload = {
@@ -371,15 +356,15 @@ const DashboardPage = () => {
   };
 
   return (
-    
+
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Header /> 
+      <Header />
 
       <div className="flex-grow w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        
+
         <div className="flex justify-end mb-4">
           <button
-            onClick={() => _toggleAddEntryModal(true)} 
+            onClick={() => _toggleAddEntryModal(true)}
             className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
           >
             + Add New Entry
@@ -485,7 +470,7 @@ const DashboardPage = () => {
 
       {/* Add Entry Modal */}
       <AddEntryModal
-        isOpen={isAddEntryModalOpen}
+        isOpen={isAddEntryModalOpen.isOpen}
         toggle={_toggleAddEntryModal}
         onSuccess={handleNewEntrySuccess}
       />
