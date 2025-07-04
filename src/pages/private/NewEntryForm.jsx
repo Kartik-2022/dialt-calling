@@ -253,9 +253,7 @@ const NewEntryForm = ({ onSuccess, toggle }) => {
          true,
          payload
        );
- 
        toast.success(data.message || UI_MESSAGES.SUBMIT_SUCCESS); 
- 
        if (onSuccess) onSuccess();
        _onClose();
      } catch (apiError) { 
