@@ -34,9 +34,8 @@ const initialFilters = {
   groupBy: "Date",
   filterBy: "Both",
 };
-
 const DashboardPage = () => {
-
+  
   const [callRecords, setCallRecords] = useState({
     data: [],
     totalCount: 0,
@@ -360,6 +359,7 @@ const DashboardPage = () => {
   const handleEnablePush = () => {
     enablePushNotifications();
   };
+
 
   return (
 

@@ -1,45 +1,44 @@
 // src/utils/oneSignalHelpers.js
+import OneSignal from 'react-onesignal';
 
-export const initializeOneSignal = (appId, allowLocalhostAsSecureOrigin = false) => {
-    if (window.OneSignal) {
-      window.OneSignal.push(function() {
-        console.log("OneSignal.push() callback for init is executing.");
-        window.OneSignal.init({
-          appId: appId,
-          notifyButton: {
-            enable: false,
-          },
-          welcomeNotification: {
-            disable: true
-          },
-          allowLocalhostAsSecureOrigin: allowLocalhostAsSecureOrigin,
-        }).then(() => {
-          console.log("OneSignal resolved");
-        }).catch(error => {
-          console.error("Error", error);
-        });
-      });
-    }
-  };
+export const initializeOneSignal = async (appId, allowLocalhostAsSecureOrigin = false) => {
+  try {
+    console.log("Attempting OneSignal initialization via react-onesignal...");
+    await OneSignal.init({ 
+      appId: appId,
+      notifyButton: {
+        enable: false,
+      },
+      welcomeNotification: {
+        disable: true
+      },
+      allowLocalhostAsSecureOrigin: allowLocalhostAsSecureOrigin,
+      requiresUserPrivacyConsent: false,
+      notificationClickHandlerMatch: "origin",
+      notificationClickHandlerAction: "focus",
+    });
+    console.log("OneSignal initialized via react-onesignal.");
 
-  export const enablePushNotifications = () => {
-    if (window.OneSignal) {
-      window.OneSignal.push(function() {
-        console.log("Current", window.OneSignal);
-        console.log("Type", typeof window.OneSignal.showSlidedownPrompt);
-  
-        setTimeout(() => {
-          if (typeof window.OneSignal.showSlidedownPrompt === 'function') {
-            window.OneSignal.showSlidedownPrompt({ force: true }).then(() => {
-              console.log("Slidedown ");
-            }).catch(error => {
-              console.error("Error setTimeout):", error);
-            });
-          } else {
-            console.log( window.OneSignal);
-          }
-        }, 500);
-      });
+  } catch (error) {
+    console.error("Error initializing OneSignal via react-onesignal:", error);
+  }
+};
+
+export const enablePushNotifications = async () => {
+  try {
+
+    const isPushSupported = await OneSignal.isPushNotificationsSupported();
+
+    
+    
+    if (isPushSupported) {
+      console.log("Push notifications are supported. Attempting to show Slidedown Prompt.");
+      await OneSignal.showSlidedownPrompt({ force: true });
+      console.log("OneSignal Slidedown Prompt shown via react-onesignal.");
+    } else {
+      console.warn("Push notifications not supported in this browser or OneSignal not initialized.");
     }
-  };
-  
+  } catch (error) {
+    console.error("Error showing Slidedown Prompt via react-onesignal:", error);
+  }
+};

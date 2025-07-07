@@ -11,7 +11,7 @@ import { initializeOneSignal } from './utils/oneSignalHelpers';
 function App() {
 
   useEffect(() => {
-    initializeOneSignal("979a3a7a-e572-40e7-b81b-ec81b1061fbf", true); 
+    initializeOneSignal("319dee69-d61f-4782-acf4-3e5d05cc85b9", true); // Pass true for localhost development
   }, []);
 
   return (
