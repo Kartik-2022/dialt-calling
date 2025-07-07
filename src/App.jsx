@@ -9,11 +9,15 @@ import { AuthProvider } from "./context/AuthContext";
 import { initializeOneSignal } from './utils/oneSignalHelpers';
 
 function App() {
-
+  const oneSignalInitialized = useRef(false);
   useEffect(() => {
-    initializeOneSignal("319dee69-d61f-4782-acf4-3e5d05cc85b9", true); // Pass true for localhost development
+    if (!oneSignalInitialized.current) {
+      // IMPORTANT: Use the App ID from your NEW OneSignal dashboard
+      // You can remove the localhost warning if you are only deploying to Vercel now.
+      initializeOneSignal("319dee69-d61f-4782-acf4-3e5d05cc85b9", false); // Set allowLocalhostAsSecureOrigin to false for production HTTPS
+      oneSignalInitialized.current = true; // Mark as initialized
+    }
   }, []);
-
   return (
     <BrowserRouter>
       <AuthProvider>
