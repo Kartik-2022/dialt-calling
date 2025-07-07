@@ -17,6 +17,8 @@ import {
 
 import { useAuth } from "../../context/AuthContext";
 
+import { enablePushNotifications } from '../../utils/oneSignalHelpers';
+
 const initialFilters = {
   page: 1,
   limit: 10,
@@ -34,6 +36,7 @@ const initialFilters = {
 };
 
 const DashboardPage = () => {
+
   const [callRecords, setCallRecords] = useState({
     data: [],
     totalCount: 0,
@@ -354,6 +357,9 @@ const DashboardPage = () => {
       _fetchActivityLogs(newFilters, newPage);
     }
   };
+  const handleEnablePush = () => {
+    enablePushNotifications();
+  };
 
   return (
 
@@ -363,6 +369,13 @@ const DashboardPage = () => {
       <div className="flex-grow w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
         <div className="flex justify-end mb-4">
+        <button
+            onClick={handleEnablePush} 
+            className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+          >
+            Enable Push Notifications
+          </button>
+
           <button
             onClick={() => _toggleAddEntryModal(true)}
             className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
