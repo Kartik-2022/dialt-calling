@@ -6,8 +6,9 @@ import CallRecordsTable from "../../components/CallRecordsTable";
 import Pagination from "../../config/Pagination";
 import AddEntryModal from "../../components/AddEntryModal";
 
-import { getAllActiviteLogs } from "../../http/http-calls";
-import { getToken } from "../../http/token-interceptor";
+// Remove direct import from http/http-calls and token-interceptor
+// import { getAllActiviteLogs } from "../../http/http-calls";
+// import { getToken } from "../../http/token-interceptor";
 
 import {
   STATIC_USERS_OPTIONS,
@@ -17,7 +18,12 @@ import {
 
 import { useAuth } from "../../context/AuthContext";
 
+// Import OneSignal helper functions
 import { enablePushNotifications, setEmailSubscription, logoutEmailSubscription } from '../../utils/oneSignalHelpers';
+
+// Import the new React Query hook
+import { useCallRecords } from '../../hooks/useCallRecordsQuery';
+
 
 const initialFilters = {
   page: 1,
@@ -34,280 +40,65 @@ const initialFilters = {
   groupBy: "Date",
   filterBy: "Both",
 };
+
 const DashboardPage = () => {
-  
-  const [callRecords, setCallRecords] = useState({
-    data: [],
-    totalCount: 0,
-  });
-  const [isLoading, setIsLoading] = useState(true);
+  // Remove callRecords state, isLoading state will come from useQuery
+  // const [callRecords, setCallRecords] = useState({ data: [], totalCount: 0 });
+  // const [isLoading, setIsLoading] = useState(true);
+
   const [filters, setFilters] = useState(initialFilters);
   const searchRef = useRef(null);
 
   const { logout } = useAuth();
 
- 
+  // State for controlling the Add Entry Modal
   const [isAddEntryModalOpen, setIsAddEntryModalOpen] = useState({
     isOpen: false,
-    data: null 
+    data: null
   });
 
+  // State for email subscription input
   const [emailInput, setEmailInput] = useState('');
 
- 
+  // --- React Query Integration ---
+  // Use the custom hook to fetch call records based on filters
+  // data will contain { data: formattedCallRecords, totalCount: number }
+  const { data: callRecordsData, isLoading, refetch, isFetching } = useCallRecords(filters);
+
+  // Extract data and totalCount for rendering
+  const callRecords = callRecordsData?.data || [];
+  const totalCount = callRecordsData?.totalCount || 0;
+  // --- End React Query Integration ---
+
+
   const _toggleAddEntryModal = useCallback((isOpen = false, data = null) => {
     setIsAddEntryModalOpen({isOpen, data});
   }, []);
 
+
   const handleNewEntrySuccess = useCallback(() => {
-    
+    // After a new entry, we want to refetch the data.
+    // React Query's refetch function will do this efficiently.
+    // We also reset filters to initial state and refetch from page 1.
     setFilters(initialFilters);
-    _fetchActivityLogs(initialFilters, 1);
-  }, []); 
+    // refetch() will trigger a background fetch for the current filters.
+    // If filters change (e.g., to initialFilters), useCallRecords will trigger a new query.
+    // We don't need to manually call _fetchActivityLogs anymore.
+    // If you want to force a refetch for the new initialFilters, you can do:
+    // queryClient.invalidateQueries(['callRecords']); // This would be done if using useQueryClient()
+    // For simplicity, changing filters will naturally trigger the useCallRecords hook.
+  }, []);
 
-  const _prepareFiltersForPayload = (filtersData) => {
-    const newPayload = {
-      page: filtersData.page,
-      limit: filtersData.limit,
-      groupBy: filtersData.groupBy,
-      filterBy: filtersData.filterBy,
-    };
 
-    if (filtersData.users && filtersData.users.length > 0) {
-      newPayload.users = filtersData.users;
-    }
+  // _prepareFiltersForPayload and formatCallRecords are now in src/api/callRecords.js
+  // So, they can be removed from here if they are not used elsewhere in this file.
+  // If they are only used by fetchActivityLogs, then they are fully encapsulated.
 
-    if (filtersData.jobFunctions && filtersData.jobFunctions.length > 0) {
-      newPayload.jobFunctions = filtersData.jobFunctions;
-    }
+  // Remove _fetchActivityLogs as useCallRecords handles fetching
+  // const _fetchActivityLogs = useCallback(async (currentFilters, pageToFetch = 1) => { /* ... */ }, [logout]);
 
-    if (filtersData.tags && filtersData.tags.length > 0) {
-      newPayload.tags = filtersData.tags;
-    }
-
-    if (filtersData.search && filtersData.search.trim() !== "") {
-      newPayload.search = filtersData.search.trim();
-    }
-
-    switch (filtersData.dateFilter) {
-      case "Today":
-        newPayload.dateFilter = "Today";
-        if (filtersData.startTime && filtersData.startTime.trim() !== "") {
-          newPayload.startTime = filtersData.startTime;
-        }
-        if (filtersData.endTime && filtersData.endTime.trim() !== "") {
-          newPayload.endTime = filtersData.endTime;
-        }
-        break;
-      case "Custom Range":
-        let effectiveStartDate = undefined;
-        let effectiveEndDate = undefined;
-
-        if (
-          filtersData.customStartDate &&
-          typeof filtersData.customStartDate === "string"
-        ) {
-          const parts = filtersData.customStartDate.split("-");
-          effectiveStartDate = new Date(
-            parseInt(parts[0]),
-            parseInt(parts[1]) - 1,
-            parseInt(parts[2]),
-            0,
-            0,
-            0,
-            0
-          );
-        }
-        if (
-          filtersData.customEndDate &&
-          typeof filtersData.customEndDate === "string"
-        ) {
-          const parts = filtersData.customEndDate.split("-");
-          effectiveEndDate = new Date(
-            parseInt(parts[0]),
-            parseInt(parts[1]) - 1,
-            parseInt(parts[2]),
-            23,
-            59,
-            59,
-            999
-          );
-        }
-
-        if (
-          effectiveStartDate instanceof Date &&
-          !isNaN(effectiveStartDate.getTime()) &&
-          effectiveEndDate instanceof Date &&
-          !isNaN(effectiveEndDate.getTime())
-        ) {
-          if (filtersData.startTime && filtersData.startTime.trim() !== "") {
-            const [sh, sm] = filtersData.startTime.split(":").map(Number);
-            effectiveStartDate.setHours(sh, sm, 0, 0);
-          }
-          if (filtersData.endTime && filtersData.endTime.trim() !== "") {
-            const [eh, em] = filtersData.endTime.split(":").map(Number);
-            effectiveEndDate.setHours(eh, em, 59, 999);
-          }
-          newPayload.dateRange = {
-            start: effectiveStartDate.toISOString(),
-            end: effectiveEndDate.toISOString(),
-          };
-        }
-        break;
-      case "All":
-        break;
-      default:
-        break;
-    }
-
-    return newPayload;
-  };
-
-  const formatCallRecords = (response) => {
-    return response.activities.map((record) => {
-      let candidateName = "N/A";
-      let contactDetails = "N/A";
-      let jobFunction = "N/A";
-      let recordType = "N/A";
-
-      if (record.isDailyCallingTracker || record.isLead) {
-        recordType = "Lead";
-        const nameMatch = record.title.match(
-          /(?:to|on)\s+([A-Za-z\s]+?)(?:\s+on|\s+at|$)/i
-        );
-        if (nameMatch && nameMatch[1]) {
-          candidateName = nameMatch[1].trim();
-        } else if (record.candidateOrLeadName) {
-          candidateName = record.candidateOrLeadName;
-        } else if (record._lead?.name?.first) {
-          candidateName = `${record._lead.name.first} ${
-            record._lead.name.last || ""
-          }`.trim();
-        }
-      } else {
-        recordType = "Candidate";
-        if (record._candidate?.name?.first && record._candidate?.name?.last) {
-          candidateName =
-            `${record._candidate.name.first} ${record._candidate.name.last}`.trim();
-        } else if (record.candidateOrLeadName) {
-          candidateName = record.candidateOrLeadName;
-        } else {
-          const nameMatch = record.title.match(
-            /(?:to|on)\s+([A-Za-z\s]+?)(?:\s+on|\s+at|$)/i
-          );
-          if (nameMatch && nameMatch[1]) {
-            candidateName = nameMatch[1].trim();
-          }
-        }
-      }
-
-      if (record._lead?.email) {
-        contactDetails = record._lead.email;
-      } else if (record._lead?.phones && record._lead.phones.length > 0) {
-        contactDetails = record._lead.phones[0];
-      } else if (
-        record._candidate?.emails &&
-        record._candidate.emails.length > 0
-      ) {
-        contactDetails = record._candidate.emails[0];
-      } else if (
-        record._candidate?.phones &&
-        record._candidate.phones.length > 0
-      ) {
-        contactDetails = record._candidate.phones[0];
-      } else if (record.candidateOrLeadEmail) {
-        contactDetails = record.candidateOrLeadEmail;
-      } else {
-        contactDetails = "N/A";
-      }
-
-      if (record._lead?._jobFunction?.name) {
-        jobFunction = record._lead._jobFunction.name;
-      } else if (record._candidate?._jobFunction?.name) {
-        jobFunction = record._candidate._jobFunction.name;
-      } else if (record._jobFunction) {
-        const foundJobFunction = STATIC_JOB_FUNCTIONS_OPTIONS.find(
-          (opt) => opt.value === record._jobFunction
-        );
-        jobFunction = foundJobFunction ? foundJobFunction.label : "N/A";
-      } else {
-        jobFunction = "N/A";
-      }
-
-      const user =
-        record._createdBy?.name?.first && record._createdBy?.name?.last
-          ? `${record._createdBy.name.first} ${record._createdBy.name.last}`.trim()
-          : "N/A";
-
-      const tags = Array.isArray(record.note) ? record.note : [];
-
-      let status = "Unknown";
-      if (record.title && typeof record.title === "string") {
-        if (record.title.toLowerCase().includes("answered"))
-          status = "Answered";
-        else if (record.title.toLowerCase().includes("busy")) status = "Busy";
-        else if (record.title.toLowerCase().includes("not reachable"))
-          status = "Not Reached";
-        else if (record.title.toLowerCase().includes("added a note"))
-          status = "Note Added";
-      }
-
-      return {
-        id: record._id,
-        createdAt: record.createdAt || "N/A",
-        candidateName: candidateName,
-        contactDetails: contactDetails,
-        jobFunction: jobFunction,
-        user: user,
-        tags: tags,
-        status: status,
-        details: record.title || "",
-        type: recordType,
-      };
-    });
-  };
-
-  const _fetchActivityLogs = useCallback(async (currentFilters, pageToFetch = 1) => {
-    try {
-      setIsLoading(true);
-
-      const token = getToken();
-      if (!token) {
-        logout();
-        return;
-      }
-
-      const finalBackendPayload = _prepareFiltersForPayload({
-        ...currentFilters,
-        page: pageToFetch,
-        limit: currentFilters.limit,
-      });
-
-      const response = await getAllActiviteLogs(finalBackendPayload);
-
-      const formattedCallRecords = formatCallRecords(response);
-
-      if (response?.error === false && response?.activities) {
-        setCallRecords({
-          data: formattedCallRecords,
-          totalCount: response?.totalCount || 0,
-        });
-      }
-    } catch (err) {
-      console.error("Error fetching activity logs:", err);
-      setCallRecords({ data: [], totalCount: 0 });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [logout]);
-
-  const initialFetch = useCallback(() => {
-    _fetchActivityLogs(initialFilters, initialFilters.page);
-  }, [_fetchActivityLogs]);
-
-  useEffect(() => {
-    initialFetch();
-  }, [initialFetch]);
+  // Remove initialFetch useEffect as useCallRecords handles initial fetching
+  // useEffect(() => { initialFetch(); }, [initialFetch]);
 
 
   const _handleFilterChange = (key, value) => {
@@ -327,54 +118,47 @@ const DashboardPage = () => {
 
     if (key !== "page" && key !== "limit") {
       updatedFilters.page = 1;
-      setCallRecords({
-        data: [],
-        totalCount: 0,
-      });
+      // No need to clear callRecords state manually, React Query handles this
+      // setCallRecords({ data: [], totalCount: 0 });
     }
 
     setFilters(updatedFilters);
 
-    if (key === "search") {
-      if (searchRef.current) clearTimeout(searchRef.current);
-      searchRef.current = setTimeout(() => {
-        _fetchActivityLogs(updatedFilters, updatedFilters.page);
-      }, 1000);
-    } else {
-      _fetchActivityLogs(updatedFilters, updatedFilters.page);
-    }
+    // React Query will automatically refetch when 'filters' state changes
+    // No need for setTimeout or manual fetch calls here.
+    // The useCallRecords hook will react to 'filters' dependency.
   };
 
   const handlePageChange = (newPage) => {
-    const totalPages = Math.ceil(callRecords?.totalCount / filters.limit);
+    const totalPages = Math.ceil(totalCount / filters.limit); // Use totalCount from React Query
     if (newPage >= 1 && newPage <= totalPages) {
       const newFilters = { ...filters, page: newPage };
       setFilters(newFilters);
-      setCallRecords({
-        data: [],
-        totalCount: 0,
-      });
-      _fetchActivityLogs(newFilters, newPage);
+      // No need to clear callRecords state manually
+      // setCallRecords({ data: [], totalCount: 0 });
+      // React Query will automatically refetch when 'filters' state changes
     }
   };
+
   const handleEnablePush = () => {
     enablePushNotifications();
   };
 
+  // Handler for email subscription
   const handleEmailSubscribe = async () => {
     if (emailInput) {
       await setEmailSubscription(emailInput);
-      setEmailInput('');
+      setEmailInput(''); // Clear input after submission
     } else {
       console.warn("Please enter an email address to subscribe.");
     }
   };
 
+  // Handler for email unsubscribe
   const handleEmailUnsubscribe = async () => {
     await logoutEmailSubscription();
-    setEmailInput(''); 
+    setEmailInput(''); // Clear input after unsubscribing
   };
-
 
   return (
 
