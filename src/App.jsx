@@ -17,11 +17,9 @@ function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
-
           <Route element={<PrivateRoute />}>
           <Route path="/dashboard" element={<DashboardPage />} />
           </Route>
-
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<div>404 Not Found</div>} />
         </Routes>

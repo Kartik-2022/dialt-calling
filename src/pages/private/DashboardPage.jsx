@@ -17,7 +17,7 @@ import {
 
 import { useAuth } from "../../context/AuthContext";
 
-import { enablePushNotifications } from '../../utils/oneSignalHelpers';
+import { enablePushNotifications, setEmailSubscription, logoutEmailSubscription } from '../../utils/oneSignalHelpers';
 
 const initialFilters = {
   page: 1,
@@ -46,23 +46,24 @@ const DashboardPage = () => {
 
   const { logout } = useAuth();
 
-  // State for controlling the Add Entry Modal
+ 
   const [isAddEntryModalOpen, setIsAddEntryModalOpen] = useState({
     isOpen: false,
-    data: null // Optional: to pass data to the modal if needed
+    data: null 
   });
 
-  // Callback to toggle the Add Entry Modal's visibility
+  const [emailInput, setEmailInput] = useState('');
+
+ 
   const _toggleAddEntryModal = useCallback((isOpen = false, data = null) => {
     setIsAddEntryModalOpen({isOpen, data});
   }, []);
 
-  // Callback to execute after a new entry is successfully submitted (e.g., re-fetch data)
   const handleNewEntrySuccess = useCallback(() => {
-    // Reset filters to initial state and re-fetch logs from page 1
+    
     setFilters(initialFilters);
     _fetchActivityLogs(initialFilters, 1);
-  }, []); // Dependency on _fetchActivityLogs ensures it's current
+  }, []); 
 
   const _prepareFiltersForPayload = (filtersData) => {
     const newPayload = {
@@ -360,6 +361,20 @@ const DashboardPage = () => {
     enablePushNotifications();
   };
 
+  const handleEmailSubscribe = async () => {
+    if (emailInput) {
+      await setEmailSubscription(emailInput);
+      setEmailInput('');
+    } else {
+      console.warn("Please enter an email address to subscribe.");
+    }
+  };
+
+  const handleEmailUnsubscribe = async () => {
+    await logoutEmailSubscription();
+    setEmailInput(''); 
+  };
+
 
   return (
 
@@ -382,6 +397,31 @@ const DashboardPage = () => {
           >
             + Add New Entry
           </button>
+        </div>
+
+        <div className="p-4 border border-gray-200 rounded-md shadow-sm bg-white">
+          <h4 className="text-lg font-semibold mb-3 text-gray-800">Email Notifications</h4>
+          <input
+            type="email"
+            placeholder="Enter your email"
+            value={emailInput}
+            onChange={(e) => setEmailInput(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded-md mb-3 focus:ring-blue-500 focus:border-blue-500"
+          />
+          <div className="flex space-x-2">
+            <button
+              onClick={handleEmailSubscribe}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              Subscribe Email
+            </button>
+            <button
+              onClick={handleEmailUnsubscribe}
+              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            >
+              Unsubscribe Email
+            </button>
+          </div>
         </div>
 
         <FiltersCard
