@@ -5,10 +5,7 @@ import FiltersCard from "../../components/FiltersCard";
 import CallRecordsTable from "../../components/CallRecordsTable";
 import Pagination from "../../config/Pagination";
 import AddEntryModal from "../../components/AddEntryModal";
-
-// Remove direct import from http/http-calls and token-interceptor
-// import { getAllActiviteLogs } from "../../http/http-calls";
-// import { getToken } from "../../http/token-interceptor";
+import AddressSearch from "../../components/AddressSearch";
 
 import {
   STATIC_USERS_OPTIONS,
@@ -18,10 +15,7 @@ import {
 
 import { useAuth } from "../../context/AuthContext";
 
-// Import OneSignal helper functions
 import { enablePushNotifications, setEmailSubscription, logoutEmailSubscription } from '../../utils/oneSignalHelpers';
-
-// Import the new React Query hook
 import { useCallRecords } from '../../hooks/useCallRecordsQuery';
 
 
@@ -42,68 +36,31 @@ const initialFilters = {
 };
 
 const DashboardPage = () => {
-  // Remove callRecords state, isLoading state will come from useQuery
-  // const [callRecords, setCallRecords] = useState({ data: [], totalCount: 0 });
-  // const [isLoading, setIsLoading] = useState(true);
-
   const [filters, setFilters] = useState(initialFilters);
   const searchRef = useRef(null);
-
   const { logout } = useAuth();
-
-  // State for controlling the Add Entry Modal
   const [isAddEntryModalOpen, setIsAddEntryModalOpen] = useState({
     isOpen: false,
     data: null
   });
-
-  // State for email subscription input
   const [emailInput, setEmailInput] = useState('');
 
-  // --- React Query Integration ---
-  // Use the custom hook to fetch call records based on filters
-  // data will contain { data: formattedCallRecords, totalCount: number }
-  const { data: callRecordsData, isLoading, refetch, isFetching } = useCallRecords(filters);
+  const { data: callRecordsData, isLoading, refetch, isFetching, isSuccess, isError, error } = useCallRecords(filters);
 
-  // Extract data and totalCount for rendering
+
   const callRecords = callRecordsData?.data || [];
   const totalCount = callRecordsData?.totalCount || 0;
-  // --- End React Query Integration ---
-
 
   const _toggleAddEntryModal = useCallback((isOpen = false, data = null) => {
     setIsAddEntryModalOpen({isOpen, data});
   }, []);
 
-
   const handleNewEntrySuccess = useCallback(() => {
-    // After a new entry, we want to refetch the data.
-    // React Query's refetch function will do this efficiently.
-    // We also reset filters to initial state and refetch from page 1.
     setFilters(initialFilters);
-    // refetch() will trigger a background fetch for the current filters.
-    // If filters change (e.g., to initialFilters), useCallRecords will trigger a new query.
-    // We don't need to manually call _fetchActivityLogs anymore.
-    // If you want to force a refetch for the new initialFilters, you can do:
-    // queryClient.invalidateQueries(['callRecords']); // This would be done if using useQueryClient()
-    // For simplicity, changing filters will naturally trigger the useCallRecords hook.
   }, []);
-
-
-  // _prepareFiltersForPayload and formatCallRecords are now in src/api/callRecords.js
-  // So, they can be removed from here if they are not used elsewhere in this file.
-  // If they are only used by fetchActivityLogs, then they are fully encapsulated.
-
-  // Remove _fetchActivityLogs as useCallRecords handles fetching
-  // const _fetchActivityLogs = useCallback(async (currentFilters, pageToFetch = 1) => { /* ... */ }, [logout]);
-
-  // Remove initialFetch useEffect as useCallRecords handles initial fetching
-  // useEffect(() => { initialFetch(); }, [initialFetch]);
-
 
   const _handleFilterChange = (key, value) => {
     let updatedFilters = { ...filters, [key]: value };
-
     if (key === "dateFilter" && value === "Custom Range") {
       updatedFilters.customStartDate = "";
       updatedFilters.customEndDate = "";
@@ -115,28 +72,17 @@ const DashboardPage = () => {
       updatedFilters.startTime = "";
       updatedFilters.endTime = "";
     }
-
     if (key !== "page" && key !== "limit") {
       updatedFilters.page = 1;
-      // No need to clear callRecords state manually, React Query handles this
-      // setCallRecords({ data: [], totalCount: 0 });
     }
-
     setFilters(updatedFilters);
-
-    // React Query will automatically refetch when 'filters' state changes
-    // No need for setTimeout or manual fetch calls here.
-    // The useCallRecords hook will react to 'filters' dependency.
   };
 
   const handlePageChange = (newPage) => {
-    const totalPages = Math.ceil(totalCount / filters.limit); // Use totalCount from React Query
+    const totalPages = Math.ceil(totalCount / filters.limit);
     if (newPage >= 1 && newPage <= totalPages) {
       const newFilters = { ...filters, page: newPage };
       setFilters(newFilters);
-      // No need to clear callRecords state manually
-      // setCallRecords({ data: [], totalCount: 0 });
-      // React Query will automatically refetch when 'filters' state changes
     }
   };
 
@@ -144,37 +90,31 @@ const DashboardPage = () => {
     enablePushNotifications();
   };
 
-  // Handler for email subscription
   const handleEmailSubscribe = async () => {
     if (emailInput) {
       await setEmailSubscription(emailInput);
-      setEmailInput(''); // Clear input after submission
+      setEmailInput('');
     } else {
       console.warn("Please enter an email address to subscribe.");
     }
   };
 
-  // Handler for email unsubscribe
   const handleEmailUnsubscribe = async () => {
     await logoutEmailSubscription();
-    setEmailInput(''); // Clear input after unsubscribing
+    setEmailInput('');
   };
 
   return (
-
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
-
       <div className="flex-grow w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-
-        <div className="flex justify-end mb-4">
-        <button
-            onClick={handleEnablePush} 
+        <div className="flex justify-between mb-4">
+          <button
+            onClick={handleEnablePush}
             className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
           >
             Enable Push Notifications
           </button>
-
           <button
             onClick={() => _toggleAddEntryModal(true)}
             className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
@@ -183,6 +123,7 @@ const DashboardPage = () => {
           </button>
         </div>
 
+     
         <div className="p-4 border border-gray-200 rounded-md shadow-sm bg-white">
           <h4 className="text-lg font-semibold mb-3 text-gray-800">Email Notifications</h4>
           <input
@@ -208,6 +149,9 @@ const DashboardPage = () => {
           </div>
         </div>
 
+        <AddressSearch />
+       
+
         <FiltersCard
           filters={filters}
           onFilterChange={_handleFilterChange}
@@ -218,7 +162,8 @@ const DashboardPage = () => {
 
         <h3 className="text-lg font-semibold mt-6 mb-2 flex items-center gap-2">
           Call Records{" "}
-          {isLoading ? (
+          
+          {(isLoading || isFetching) && (
             <svg
               className="text-gray-300 animate-spin"
               viewBox="0 0 64 64"
@@ -243,12 +188,12 @@ const DashboardPage = () => {
                 className="text-gray-900"
               ></path>
             </svg>
-          ) : null}
+          )}
         </h3>
 
-        {callRecords?.totalCount ? (
-          <CallRecordsTable data={callRecords?.data} />
-        ) : isLoading ? (
+        {totalCount > 0 ? (
+          <CallRecordsTable data={callRecords} />
+        ) : isLoading || isFetching ? (
           <div className="grid min-h-[140px] w-full place-items-center overflow-x-scroll rounded-lg p-6 lg:overflow-visible">
             <svg
               className="text-gray-300 animate-spin"
@@ -283,7 +228,7 @@ const DashboardPage = () => {
 
         <Pagination
           currentPage={filters.page}
-          totalItems={callRecords?.totalCount}
+          totalItems={totalCount}
           itemsPerPage={filters.limit}
           onPageChange={handlePageChange}
         />

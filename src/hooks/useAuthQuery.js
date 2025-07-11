@@ -16,20 +16,13 @@ export const useLogin = () => {
   return useMutation({
     mutationFn: loginUser,
 
-    onSuccess: (data) => {
-      
-      setToken(data.token); 
-
-      
+    onSuccess: (data) => { 
+      setToken(data.token);     
       if (data.user) {
         setUser(data.user); 
-      }
-
-      
+      }    
       queryClient.invalidateQueries({ queryKey: ['callRecords'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
-
-      
       navigate('/dashboard');
       toast.success("Logged in successfully!");
     },

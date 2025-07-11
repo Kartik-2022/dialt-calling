@@ -9,12 +9,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
       body {
-        font-family: 'Inter', sans-serif; /* Recommended font from instructions */
+        font-family: 'Inter', sans-serif;
         margin: 0;
         padding: 0;
         box-sizing: border-box;
       }
-      /* Custom styles for the checkbox to match shadcn's visual */
       input[type="checkbox"] {
         -webkit-appearance: none;
         -moz-appearance: none;
@@ -24,13 +23,13 @@
         height: 16px;
         width: 16px;
         background-color: #fff;
-        border: 1px solid #d1d5db; /* border-input */
-        border-radius: 4px; /* rounded-sm */
+        border: 1px solid #d1d5db;
+        border-radius: 4px;
         cursor: pointer;
         position: relative;
       }
       input[type="checkbox"]:checked {
-        background-color: #0F172A; /* bg-primary (dark slate) */
+        background-color: #0F172A;
         border-color: #0F172A;
       }
       input[type="checkbox"]:checked::after {
@@ -46,9 +45,22 @@
       }
       input[type="checkbox"]:focus-visible {
         outline: none;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); /* focus-visible:ring-1 focus-visible:ring-ring */
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
       }
     </style>
+ 
+    <script>
+      window.googleMapsApiLoaded = false;
+      window.initMap = function() {
+        console.log('Google Maps API script loaded via index.html and initMap callback fired.');
+        window.googleMapsApiLoaded = true;
+      };
+    </script>
+    <script 
+      src="https://maps.googleapis.com/maps/api/js?key=<INSERT-API-KEY-HERE>&libraries=places&callback=initMap"
+      async
+      defer
+    ></script>
 </head>
 <body>
     <div id="root"></div>

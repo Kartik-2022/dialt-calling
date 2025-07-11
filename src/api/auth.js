@@ -1,6 +1,5 @@
 // src/api/auth.js
-import { login as originalLogin } from "../http/http-calls"; // Renamed originalLoginUser to originalLogin for clarity
-
+import { login as originalLogin } from "../http/http-calls"; 
 
 export const loginUser = async (credentials) => {
   try {

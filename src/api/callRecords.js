@@ -1,7 +1,8 @@
 // src/api/callRecords.js
 import { getAllActiviteLogs as originalGetAllActiviteLogs } from "../http/http-calls";
-import { getToken } from "../http/token-interceptor"; // Assuming getToken is needed for API calls
-import { useAuth } from "../context/AuthContext"; // Assuming logout is needed if token is invalid
+import { getToken } from "../http/token-interceptor";
+import { STATIC_JOB_FUNCTIONS_OPTIONS } from "../config/index"; 
+
 
 export const prepareFiltersForPayload = (filtersData) => {
   const newPayload = {
@@ -100,6 +101,7 @@ export const prepareFiltersForPayload = (filtersData) => {
 
   return newPayload;
 };
+
 
 export const formatCallRecords = (response) => {
   return response.activities.map((record) => {
@@ -205,36 +207,26 @@ export const formatCallRecords = (response) => {
   });
 };
 
-/**
- * Fetches activity logs from the backend.
- * This function is a pure API call, no React Query logic here.
- * @param {object} filtersData - The filters to apply to the API request.
- * @returns {Promise<object>} The raw response from the API.
- */
+
 export const fetchActivityLogs = async (filtersData) => {
   const token = getToken();
-  // Note: We cannot use useAuth().logout() here because this is not a React component/hook.
-  // The logout logic will need to be handled by the component consuming the hook,
-  // or by an Axios interceptor if you have one.
   if (!token) {
-    // In a real app, you might throw a specific error or redirect here
-    // but for a pure API function, just throwing is standard.
     throw new Error("Authentication token not found. Please log in.");
   }
-
   const finalBackendPayload = prepareFiltersForPayload(filtersData);
-  const response = await originalGetAllActiviteLogs(finalBackendPayload);
-
-  // You can still format here if you want the API function to return formatted data,
-  // or format it in the useQuery hook. For now, let's keep formatting here.
-  const formattedData = formatCallRecords(response);
-
-  if (response?.error === false && response?.activities) {
-    return {
-      data: formattedData,
-      totalCount: response?.totalCount || 0,
-    };
-  } else {
-    throw new Error(response?.message || "Failed to fetch activity logs.");
+  try {
+    const response = await originalGetAllActiviteLogs(finalBackendPayload); 
+    if (response?.error === false && Array.isArray(response?.activities)) {
+      const formattedData = formatCallRecords(response);
+      return { 
+        data: formattedData,
+        totalCount: response?.totalCount || 0,
+      };
+    } else {
+      throw new Error(response?.message || "API response format unexpected or indicated an error.");
+    }
+  } catch (error) {
+    console.error("Error in fetchActivityLogs (API layer):", error);
+    throw error;
   }
 };
