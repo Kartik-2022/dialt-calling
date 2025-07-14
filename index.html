@@ -49,18 +49,6 @@
       }
     </style>
  
-    <script>
-      window.googleMapsApiLoaded = false;
-      window.initMap = function() {
-        console.log('Google Maps API script loaded via index.html and initMap callback fired.');
-        window.googleMapsApiLoaded = true;
-      };
-    </script>
-    <script 
-      src="https://maps.googleapis.com/maps/api/js?key=<INSERT-API-KEY-HERE>&libraries=places&callback=initMap"
-      async
-      defer
-    ></script>
 </head>
 <body>
     <div id="root"></div>

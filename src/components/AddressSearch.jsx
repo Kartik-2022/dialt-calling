@@ -15,7 +15,7 @@ const AddressSearch = () => {
   const [isDirty, setIsDirty] = useState({});
   const [errors, setErrors] = useState({});
 
-  const [inpValue, setInpValue] = useState(""); 
+  // const [inpValue, setInpValue] = useState(""); 
 
   const _handleChange = useCallback((key, value) => {
     setAddress(prevAddress => ({ ...prevAddress, [key]: value }));
@@ -47,6 +47,7 @@ const AddressSearch = () => {
               newErrors[key] = "*Required";
               isFormValid = false;
             } else {
+              newIsDirty[key] = false; // Reset dirty state after validation
               newErrors[key] = null;
             }
             break;
@@ -60,6 +61,7 @@ const AddressSearch = () => {
                 isFormValid = false;
             } else {
                 newErrors[key] = null;
+                newIsDirty[key] = false; // Reset dirty state after validation
             }
             break;
 
@@ -69,6 +71,7 @@ const AddressSearch = () => {
       }
     });
 
+    setIsDirty(newIsDirty);
     setErrors(newErrors);
     return isFormValid;
   }, []);
@@ -106,7 +109,6 @@ const AddressSearch = () => {
     });
     setErrors({});
     setIsDirty({});
-    setInpValue(""); 
   }, []);
 
   return (
@@ -120,7 +122,6 @@ const AddressSearch = () => {
         <GoogleMapInput
           id="google-address-search"
           onChange={handleGoogleAddressSelect}
-
           value={address} 
           placeholder="Search for an address..."
         />

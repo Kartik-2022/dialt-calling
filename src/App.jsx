@@ -7,6 +7,9 @@ import LoginPage from './pages/public/LoginPage';
 import DashboardPage from './pages/private/DashboardPage';
 import { AuthProvider } from "./context/AuthContext";
 import { initializeOneSignal } from './utils/oneSignalHelpers';
+import MapPage from './pages/private/MapPage';
+import AddressSearchPage from './pages/private/AddressSearchPage';
+
 
 function App() {
   useEffect(() => {
@@ -19,6 +22,8 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route element={<PrivateRoute />}>
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/map" element={<MapPage />} />
+          <Route path="/address-search" element={<AddressSearchPage />} />
           </Route>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<div>404 Not Found</div>} />

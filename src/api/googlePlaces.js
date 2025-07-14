@@ -7,9 +7,8 @@ let sessionToken = null;
 export const startNewAutocompleteSession = () => {
   if (isGoogleMapsPlacesReady()) {
     sessionToken = new window.google.maps.places.AutocompleteSessionToken();
-    console.log('New Google Autocomplete Session Token created.');
+    console.log('Autocomplete Session Token created.');
   } else {
-    console.warn('Google Maps Places API not ready to start new session.');
     sessionToken = null;
   }
 };
@@ -17,7 +16,7 @@ export const startNewAutocompleteSession = () => {
 
 export const clearAutocompleteSession = () => {
   sessionToken = null;
-  console.log('Google Autocomplete Session Token cleared.');
+  console.log('Autocomplete Token cleared.');
 };
 
 export const googlePlaceSearch = (searchValue) => {
@@ -25,7 +24,6 @@ export const googlePlaceSearch = (searchValue) => {
     if (!isGoogleMapsPlacesReady() || !searchValue) {
       return resolve([]);
     }
-
 
     if (!sessionToken) {
       startNewAutocompleteSession(); 
@@ -43,8 +41,8 @@ export const googlePlaceSearch = (searchValue) => {
       (predictions, status) => {
         if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) {
           const searchedPlaces = [];
-          predictions.forEach((prediction) => {
-            searchedPlaces.push(prediction);
+          predictions?.forEach((prediction) => {
+            searchedPlaces?.push(prediction);
           });
           resolve(searchedPlaces);
         } else if (status === window.google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
@@ -94,8 +92,8 @@ export const googlePlaceDetails = (placeId) => {
 export const _formatAddress = (result) => {
   if (!result || result.length === 0 || !result[0]) return {};
 
-  
   const addressComponents = {};
+
   result[0].address_components.forEach((component) => {
     component.types.forEach((type) => {
       if (!(addressComponents[type] && addressComponents[type]?.length)) {
@@ -111,6 +109,7 @@ export const _formatAddress = (result) => {
       sublocalities += sublocality + " ";
     });
   }
+
   return {
     address:
       (addressComponents.street_number?.length
@@ -145,13 +144,7 @@ export const _formatAddress = (result) => {
       addressComponents.postal_code && addressComponents.postal_code.length
         ? addressComponents.postal_code[0]
         : "",
-    lat:
-      result?.length && result[0]?.geometry?.location?.lat()
-        ? result[0].geometry.location.lat()
-        : undefined,
-    lng:
-      result?.length && result[0]?.geometry?.location?.lng()
-        ? result[0].geometry.location.lng()
-        : undefined,
+    lat: result?.[0]?.geometry?.location?.lat(),
+    lng: result?.[0]?.geometry?.location?.lng(),
   };
 };

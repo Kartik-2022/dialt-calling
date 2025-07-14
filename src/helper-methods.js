@@ -1,6 +1,8 @@
+import toast from "react-hot-toast";
+
 export const errorHandler = (error) => {
   console.error("An error occurred:", error);
-
+  toast.error(error.message || "An unexpected error occurred. Please try again.");
 };
 
 

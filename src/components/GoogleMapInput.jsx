@@ -9,7 +9,7 @@ const GoogleMapInput = ({ onChange, disabled = false, value, placeholder }) => {
   const searchInputTimerRef = useRef(null);
   const [inputValue, setInputValue] = useState(null);
 
-  const loadOptions = (searchInput, callback) => {
+  const _loadOptions = (searchInput, callback) => {
 
     if (!searchInput) {
       return callback([]);
@@ -30,15 +30,16 @@ const GoogleMapInput = ({ onChange, disabled = false, value, placeholder }) => {
         callback(formatResult);
       } catch (error) {
         console.error("Error", error);
-        toast.error("Failed to search addresses. Please try again.");
+       errorHandler({message: "Failed to fetch address suggestions. Please try again."});
         callback([]);
       }
     }, 500); 
   };
 
-  const handleSelectChange = async (selectedOption) => {
+  const _handleSelectChange = async (selectedOption) => {
     setInputValue(selectedOption);
     if (!onChange) return;
+
     if (!selectedOption) {
       onChange({
         street: "",
@@ -49,11 +50,15 @@ const GoogleMapInput = ({ onChange, disabled = false, value, placeholder }) => {
       });
       return;
     }
+
     try {
-      const detail = await googlePlaceDetails(selectedOption.place_id);
+      setInputValue(null);
+      // used to fetch the details of the selected place
+      const detail = await googlePlaceDetails(selectedOption?.place_id);
+      
+      // postal code is mandatory for address validation - otherwise show error
       if (!detail?.postal) {
-        setInputValue(null);
-        toast.error("Selected address is invalid (missing pincode). Please choose another.");
+        errorHandler({message: "Selected address is invalid (missing pincode). Please choose another."});
         onChange({
           street: "",
           city: "",
@@ -63,25 +68,28 @@ const GoogleMapInput = ({ onChange, disabled = false, value, placeholder }) => {
         });
         return;
       }
-
       const address = {};
+
       address["street"] = detail?.address || "";
       address["city"] = detail?.city || "";
       address["county"] = detail?.county || "";
       address["state"] = detail?.state || ""; 
       address["pinCode"] = detail?.postal || "";
+      address["lat"] = detail?.lat || "";
+      address["lng"] = detail?.lng || "";
+
       onChange(address);
     } catch (error) {
       console.error("Error fetching Google Place Details:", error);
-      toast.error("Failed to get address details. Please try again.");
+     errorHandler({message:"Failed to get address details. Please try again."});
       setInputValue(null);
-      onChange({
-        street: "",
-        city: "",
-        county: "",
-        state: "",
-        pinCode: "",
-      });
+      // onChange({
+      //   street: "",
+      //   city: "",
+      //   county: "",
+      //   state: "",
+      //   pinCode: "",
+      // });
     }
   };
 
@@ -95,10 +103,10 @@ const GoogleMapInput = ({ onChange, disabled = false, value, placeholder }) => {
     <AsyncSelect
       placeholder={placeholder || "Search Address"}
       cacheOptions
-      defaultOptions
-      loadOptions={loadOptions}
+      // defaultOptions
+      loadOptions={_loadOptions}
       value={inputValue}
-      onChange={handleSelectChange}
+      onChange={_handleSelectChange}
       isDisabled={disabled}
       isClearable
       classNamePrefix="react-select"

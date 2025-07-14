@@ -5,7 +5,9 @@ import FiltersCard from "../../components/FiltersCard";
 import CallRecordsTable from "../../components/CallRecordsTable";
 import Pagination from "../../config/Pagination";
 import AddEntryModal from "../../components/AddEntryModal";
-import AddressSearch from "../../components/AddressSearch";
+// REMOVED: import AddressSearch from "../../components/AddressSearch"; // No longer directly included
+// REMOVED: import PopulationMap from "../../components/PopulationMap"; // No longer directly included
+import { useNavigate } from 'react-router-dom'; // Import useNavigate for navigation
 
 import {
   STATIC_USERS_OPTIONS,
@@ -16,7 +18,8 @@ import {
 import { useAuth } from "../../context/AuthContext";
 
 import { enablePushNotifications, setEmailSubscription, logoutEmailSubscription } from '../../utils/oneSignalHelpers';
-import { useCallRecords } from '../../hooks/useCallRecordsQuery';
+import { fetchActivityLogs } from '../../api/callRecords';
+import toast from 'react-hot-toast';
 
 
 const initialFilters = {
@@ -45,11 +48,37 @@ const DashboardPage = () => {
   });
   const [emailInput, setEmailInput] = useState('');
 
-  const { data: callRecordsData, isLoading, refetch, isFetching, isSuccess, isError, error } = useCallRecords(filters);
+  const navigate = useNavigate(); // Initialize useNavigate hook
 
+  // --- Manual Data Fetching ---
+  const [callRecords, setCallRecords] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
+  const [error, setError] = useState(null);
 
-  const callRecords = callRecordsData?.data || [];
-  const totalCount = callRecordsData?.totalCount || 0;
+  const fetchData = useCallback(async () => {
+    setIsFetching(true);
+    setError(null);
+    try {
+      const data = await fetchActivityLogs(filters);
+      setCallRecords(data?.data || []);
+      setTotalCount(data?.totalCount || 0);
+    } catch (err) {
+      console.error("Failed to fetch call records:", err);
+      setError(err);
+      toast.error("Failed to load call records. Please try again.");
+      setCallRecords([]);
+      setTotalCount(0);
+    } finally {
+      setIsLoading(false);
+      setIsFetching(false);
+    }
+  }, [filters]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const _toggleAddEntryModal = useCallback((isOpen = false, data = null) => {
     setIsAddEntryModalOpen({isOpen, data});
@@ -104,10 +133,22 @@ const DashboardPage = () => {
     setEmailInput('');
   };
 
+  const handleViewMap = () => {
+    navigate('/map'); // Navigate to the new map page
+  };
+
+  const handleViewAddressSearch = () => {
+    navigate('/address-search'); // Navigate to the new address search page
+  };
+
+
   return (
+
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
+
       <div className="flex-grow w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
         <div className="flex justify-between mb-4">
           <button
             onClick={handleEnablePush}
@@ -115,6 +156,7 @@ const DashboardPage = () => {
           >
             Enable Push Notifications
           </button>
+
           <button
             onClick={() => _toggleAddEntryModal(true)}
             className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
@@ -123,7 +165,7 @@ const DashboardPage = () => {
           </button>
         </div>
 
-     
+        {/* Email Subscription Section */}
         <div className="p-4 border border-gray-200 rounded-md shadow-sm bg-white">
           <h4 className="text-lg font-semibold mb-3 text-gray-800">Email Notifications</h4>
           <input
@@ -148,9 +190,24 @@ const DashboardPage = () => {
             </button>
           </div>
         </div>
+        {/* End Email Subscription Section */}
 
-        <AddressSearch />
-       
+        {/* NEW: Buttons to View Map and Address Search */}
+        <div className="flex justify-center space-x-4 mt-6">
+          <button
+            onClick={handleViewMap}
+            className="px-6 py-3 bg-green-600 text-white rounded-md text-lg font-semibold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 shadow-lg"
+          >
+            View Population Map
+          </button>
+          <button
+            onClick={handleViewAddressSearch}
+            className="px-6 py-3 bg-blue-600 text-white rounded-md text-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-lg"
+          >
+            Go to Address Search
+          </button>
+        </div>
+        {/* END NEW: Buttons to View Map and Address Search */}
 
         <FiltersCard
           filters={filters}
@@ -162,7 +219,6 @@ const DashboardPage = () => {
 
         <h3 className="text-lg font-semibold mt-6 mb-2 flex items-center gap-2">
           Call Records{" "}
-          
           {(isLoading || isFetching) && (
             <svg
               className="text-gray-300 animate-spin"
