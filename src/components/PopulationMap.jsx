@@ -3,50 +3,50 @@ import React, { useState, useCallback } from 'react';
 import GoogleMapReact from 'google-map-react';
 import toast from 'react-hot-toast'; 
 import { GOOGLE_MAPS_API_KEY } from '../config';
+
 import { CITIES_DATA } from '../config';
 
-// Component for a custom Marker
-const MapMarker = ({ text, city, onClick }) => (
-  <div
-    className="relative w-6 h-6 rounded-full bg-blue-600 border-2 border-white shadow-md cursor-pointer flex items-center justify-center text-white font-bold text-xs"
-    title={city.name}
-    onClick={() => onClick(city)}
-    style={{ transform: 'translate(-50%, -50%)' }}
-  >
-    📍
-  </div>
-);
+const MapMarker = ({ text, city, onMouseEnter, onMouseLeave, onChildClick }) => (
+    <div
+      className="relative w-6 h-6 rounded-full bg-blue-600 border-2 border-white shadow-md cursor-pointer flex items-center justify-center text-white font-bold text-xs"
+      title={city.name}
+      onMouseEnter={() => onMouseEnter(city)} 
+      onMouseLeave={onMouseLeave} 
+      onClick={() => onChildClick(city)} 
+      style={{ transform: 'translate(-50%, -50%)' }}
+    >
+      📍
+    </div>
+  );
 
 // Component for a custom Circle overlay
-const MapCircle = ({ lat, lng, radiusInMeters, zoom, onClick, city }) => {
-  const pixelsPerMeter = 2 ** (zoom - 10);
-  const size = radiusInMeters * pixelsPerMeter / 1000;
+const MapCircle = ({ lat, lng, radiusInPixels, onMouseEnter, onMouseLeave, onChildClick, city }) => {
+    const diameter = radiusInPixels * 2; 
+  
+    return (
+      <div
+        className="absolute bg-red-500 rounded-full opacity-35 border-2 border-red-700 cursor-pointer"
+        style={{
+          width: `${diameter}px`,
+          height: `${diameter}px`,
+          transform: 'translate(-50%, -50%)',
+          zIndex: 50, 
+        }}
+        onMouseEnter={() => onMouseEnter(city)}
+        onMouseLeave={onMouseLeave} 
+        onClick={() => onChildClick(city)} 
+        title={`Population influence for ${city.name}`}
+      ></div>
+    );
+  };
 
-  return (
-    <div
-      className="absolute bg-red-500 rounded-full opacity-35 border-2 border-red-700 cursor-pointer"
-      style={{
-        width: `${size}px`,
-        height: `${size}px`,
-        transform: 'translate(-50%, -50%)',
-      }}
-      onClick={() => onClick(city)}
-      title={`Population influence for ${city.name}`}
-    ></div>
-  );
-};
-
-// Function to calculate circle radius based on population
 const getCircleRadius = (population) => {
-  const minPop = 10000000;
-  const maxPop = 30000000;
-  const minRadius = 50000;
-  const maxRadius = 150000;
+ 
+  const basePixelRadius = Math.sqrt(population) *0.01 ; 
 
-  if (population <= minPop) return minRadius;
-  if (population >= maxPop) return maxRadius;
-
-  return minRadius + ((population - minPop) / (maxPop - minPop)) * (maxRadius - minRadius);
+  const minVisiblePixelRadius = 35; 
+  
+  return Math.max(basePixelRadius, minVisiblePixelRadius);
 };
 
 
@@ -57,19 +57,27 @@ const PopulationMap = () => {
 
   
 
-
   const onMapClick = useCallback(({ event }) => {
     setInfoWindowData(null);
     setMapZoom(5);
     setMapCenter({ lat: 22.0, lng: 78.0 });
   }, []);
 
-  const onCityElementClick = useCallback((city) => {
-    setMapCenter({ lat: city.lat, lng: city.lng });
-    setMapZoom(9);
+  const handleMouseEnterCity = useCallback((city) => {
     setInfoWindowData({ city: city });
-   
   }, []);
+
+
+  const handleMouseLeaveCity = useCallback(() => {
+    setInfoWindowData(null);
+  }, []);
+
+   const handleChildClickZoom = useCallback((city) => {
+    setMapCenter({ lat: city.lat, lng: city.lng });
+    setMapZoom(9); 
+    toast.info(`Zoomed to ${city.name}`); 
+  }, []);
+
 
  
 
@@ -99,16 +107,21 @@ const PopulationMap = () => {
                 lat={city.lat}
                 lng={city.lng}
                 city={city}
-                onClick={onCityElementClick}
+                onMouseEnter={handleMouseEnterCity}
+                onMouseLeave={handleMouseLeaveCity}
+                onChildClick={handleChildClickZoom}
+
               />,
               <MapCircle
                 key={`circle-${city.id}`}
                 lat={city.lat}
                 lng={city.lng}
-                radiusInMeters={getCircleRadius(city.population)}
+                radiusInPixels={getCircleRadius(city.population)} 
                 zoom={mapZoom}
-                onClick={onCityElementClick}
                 city={city}
+                onMouseEnter={handleMouseEnterCity}
+                onMouseLeave={handleMouseLeaveCity}
+                onChildClick={handleChildClickZoom}
               />
             ]
           ))}
@@ -129,12 +142,16 @@ const PopulationMap = () => {
             >
               <h4 className="font-bold text-lg mb-1">{infoWindowData.city.name}</h4>
               <p className="text-gray-700">Population: {infoWindowData.city.population.toLocaleString()}</p>
-              <button
-                onClick={() => setInfoWindowData(null)}
-                className="absolute top-1 right-1 text-gray-500 hover:text-gray-700 text-sm font-bold"
-              >
-                &times;
-              </button>
+              
+              {infoWindowData.city.malePopulation && infoWindowData.city.femalePopulation && (
+                <>
+                  <p className="text-gray-700">Male: {infoWindowData.city.malePopulation.toLocaleString()}</p>
+                  <p className="text-gray-700">Female: {infoWindowData.city.femalePopulation.toLocaleString()}</p>
+                  <p className="text-gray-700">
+                    Ratio (M:F): {(infoWindowData.city.malePopulation / infoWindowData.city.femalePopulation).toFixed(2)}:1
+                  </p>
+                </>
+              )}
             </div>
           )}
         </GoogleMapReact>

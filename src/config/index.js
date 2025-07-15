@@ -58,9 +58,9 @@ export const DUMMY_API_DELAY_MS = 500;
 export const GOOGLE_MAPS_API_KEY = "AIzaSyBh1L-uMjj_IvmDwGKkfUL5pMpaIxyu1t0";
 
 export const CITIES_DATA = [
-  { id: 'mumbai', name: 'Mumbai', population: 20000000, lat: 19.0760, lng: 72.8777 },
-  { id: 'delhi', name: 'Delhi', population: 30000000, lat: 28.7041, lng: 77.1025 },
-  { id: 'kolkata', name: 'Kolkata', population: 15000000, lat: 22.5726, lng: 88.3639 },
-  { id: 'chennai', name: 'Chennai', population: 10000000, lat: 13.0827, lng: 80.2707 },
-  { id: 'bangalore', name: 'Bengaluru', population: 13000000, lat: 12.9716, lng: 77.5946 },
+  { id: 'mumbai', name: 'Mumbai', population: 20000000, lat: 19.0760, lng: 72.8777, malePopulation: 10500000, femalePopulation: 9500000 },
+  { id: 'delhi', name: 'Delhi', population: 30000000, lat: 28.7041, lng: 77.1025, malePopulation: 16000000, femalePopulation: 14000000 },
+  { id: 'kolkata', name: 'Kolkata', population: 15000000, lat: 22.5726, lng: 88.3639, malePopulation: 7800000, femalePopulation: 7200000 },
+  { id: 'chennai', name: 'Chennai', population: 10000000, lat: 13.0827, lng: 80.2707, malePopulation: 5000000, femalePopulation: 5000000 },
+  { id: 'bangalore', name: 'Bengaluru', population: 13000000, lat: 12.9716, lng: 77.5946, malePopulation: 6800000, femalePopulation: 6200000 },
 ];
