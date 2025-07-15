@@ -5,9 +5,7 @@ import FiltersCard from "../../components/FiltersCard";
 import CallRecordsTable from "../../components/CallRecordsTable";
 import Pagination from "../../config/Pagination";
 import AddEntryModal from "../../components/AddEntryModal";
-// REMOVED: import AddressSearch from "../../components/AddressSearch"; // No longer directly included
-// REMOVED: import PopulationMap from "../../components/PopulationMap"; // No longer directly included
-import { useNavigate } from 'react-router-dom'; // Import useNavigate for navigation
+import { useNavigate } from 'react-router-dom';
 
 import {
   STATIC_USERS_OPTIONS,
@@ -17,7 +15,7 @@ import {
 
 import { useAuth } from "../../context/AuthContext";
 
-import { enablePushNotifications, setEmailSubscription, logoutEmailSubscription } from '../../utils/oneSignalHelpers';
+// REMOVED: import { enablePushNotifications, setEmailSubscription, logoutEmailSubscription } from '../../utils/oneSignalHelpers'; // Moved to OneSignalPage
 import { fetchActivityLogs } from '../../api/callRecords';
 import toast from 'react-hot-toast';
 
@@ -46,9 +44,9 @@ const DashboardPage = () => {
     isOpen: false,
     data: null
   });
-  const [emailInput, setEmailInput] = useState('');
+  // REMOVED: const [emailInput, setEmailInput] = useState(''); // Moved to OneSignalPage
 
-  const navigate = useNavigate(); // Initialize useNavigate hook
+  const navigate = useNavigate();
 
   // --- Manual Data Fetching ---
   const [callRecords, setCallRecords] = useState([]);
@@ -79,6 +77,17 @@ const DashboardPage = () => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  console.log('DashboardPage Render Cycle:');
+  console.log('  Filters:', filters);
+  console.log('  Manual Fetching State:');
+  console.log('    isLoading:', isLoading);
+  console.log('    isFetching:', isFetching);
+  console.log('    error:', error);
+  console.log('  Derived State for Rendering:');
+  console.log('    callRecords (array for table):', callRecords);
+  console.log('    totalCount (for pagination):', totalCount);
+
 
   const _toggleAddEntryModal = useCallback((isOpen = false, data = null) => {
     setIsAddEntryModalOpen({isOpen, data});
@@ -115,48 +124,30 @@ const DashboardPage = () => {
     }
   };
 
-  const handleEnablePush = () => {
-    enablePushNotifications();
-  };
+  // REMOVED: handleEnablePush, handleEmailSubscribe, handleEmailUnsubscribe (moved to OneSignalPage)
 
-  const handleEmailSubscribe = async () => {
-    if (emailInput) {
-      await setEmailSubscription(emailInput);
-      setEmailInput('');
-    } else {
-      console.warn("Please enter an email address to subscribe.");
-    }
-  };
+  const handleViewMap = useCallback(() => {
+    navigate('/map');
+  }, [navigate]);
 
-  const handleEmailUnsubscribe = async () => {
-    await logoutEmailSubscription();
-    setEmailInput('');
-  };
-
-  const handleViewMap = () => {
-    navigate('/map'); // Navigate to the new map page
-  };
-
-  const handleViewAddressSearch = () => {
-    navigate('/address-search'); // Navigate to the new address search page
-  };
+  const handleViewAddressSearch = useCallback(() => {
+    navigate('/address-search');
+  }, [navigate]);
 
 
   return (
 
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Header />
+      {/* Pass handlers to the Header component */}
+      <Header
+        onViewMap={handleViewMap}
+        onGoToAddressSearch={handleViewAddressSearch}
+        // No longer passing onEnablePushNotifications as it's handled by Header's internal navigation
+      />
 
       <div className="flex-grow w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
-        <div className="flex justify-between mb-4">
-          <button
-            onClick={handleEnablePush}
-            className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-          >
-            Enable Push Notifications
-          </button>
-
+        <div className="flex justify-end mb-4">
           <button
             onClick={() => _toggleAddEntryModal(true)}
             className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
@@ -165,49 +156,10 @@ const DashboardPage = () => {
           </button>
         </div>
 
-        {/* Email Subscription Section */}
-        <div className="p-4 border border-gray-200 rounded-md shadow-sm bg-white">
-          <h4 className="text-lg font-semibold mb-3 text-gray-800">Email Notifications</h4>
-          <input
-            type="email"
-            placeholder="Enter your email"
-            value={emailInput}
-            onChange={(e) => setEmailInput(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md mb-3 focus:ring-blue-500 focus:border-blue-500"
-          />
-          <div className="flex space-x-2">
-            <button
-              onClick={handleEmailSubscribe}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-              Subscribe Email
-            </button>
-            <button
-              onClick={handleEmailUnsubscribe}
-              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-            >
-              Unsubscribe Email
-            </button>
-          </div>
-        </div>
-        {/* End Email Subscription Section */}
+        {/* REMOVED: Email Subscription Section (moved to OneSignalPage) */}
 
-        {/* NEW: Buttons to View Map and Address Search */}
-        <div className="flex justify-center space-x-4 mt-6">
-          <button
-            onClick={handleViewMap}
-            className="px-6 py-3 bg-green-600 text-white rounded-md text-lg font-semibold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 shadow-lg"
-          >
-            View Population Map
-          </button>
-          <button
-            onClick={handleViewAddressSearch}
-            className="px-6 py-3 bg-blue-600 text-white rounded-md text-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-lg"
-          >
-            Go to Address Search
-          </button>
-        </div>
-        {/* END NEW: Buttons to View Map and Address Search */}
+        {/* REMOVED: Buttons to View Map and Address Search (moved to Header) */}
+
 
         <FiltersCard
           filters={filters}

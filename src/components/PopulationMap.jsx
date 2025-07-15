@@ -2,15 +2,8 @@
 import React, { useState, useCallback } from 'react';
 import GoogleMapReact from 'google-map-react';
 import toast from 'react-hot-toast'; 
-
-// Static data for Indian cities 
-const CITIES_DATA = [
-  { id: 'mumbai', name: 'Mumbai', population: 20000000, lat: 19.0760, lng: 72.8777 },
-  { id: 'delhi', name: 'Delhi', population: 30000000, lat: 28.7041, lng: 77.1025 },
-  { id: 'kolkata', name: 'Kolkata', population: 15000000, lat: 22.5726, lng: 88.3639 },
-  { id: 'chennai', name: 'Chennai', population: 10000000, lat: 13.0827, lng: 80.2707 },
-  { id: 'bangalore', name: 'Bengaluru', population: 13000000, lat: 12.9716, lng: 77.5946 },
-];
+import { GOOGLE_MAPS_API_KEY } from '../config';
+import { CITIES_DATA } from '../config';
 
 // Component for a custom Marker
 const MapMarker = ({ text, city, onClick }) => (
@@ -62,7 +55,8 @@ const PopulationMap = () => {
   const [mapZoom, setMapZoom] = useState(5);
   const [infoWindowData, setInfoWindowData] = useState(null);
 
-  const GOOGLE_MAPS_API_KEY = "AIzaSyBh1L-uMjj_IvmDwGKkfUL5pMpaIxyu1t0";
+  
+
 
   const onMapClick = useCallback(({ event }) => {
     setInfoWindowData(null);
@@ -74,11 +68,10 @@ const PopulationMap = () => {
     setMapCenter({ lat: city.lat, lng: city.lng });
     setMapZoom(9);
     setInfoWindowData({ city: city });
-    toast.info(`Clicked on ${city.name}`);
+   
   }, []);
 
-  const onGoogleApiLoaded = useCallback(({ map, maps }) => {
-  }, []);
+ 
 
   const onZoomChange = useCallback((newZoom) => {
     setMapZoom(newZoom);
@@ -89,6 +82,7 @@ const PopulationMap = () => {
     <div className="w-full h-[500px] rounded-lg overflow-hidden shadow-lg border border-gray-200 flex flex-col">
       <div style={{ flexGrow: 1, height: '100%' }}>
         <GoogleMapReact
+         bootstrapURLKeys={{ key: GOOGLE_MAPS_API_KEY }}
           defaultCenter={mapCenter}
           defaultZoom={mapZoom}
           center={mapCenter}
@@ -97,7 +91,6 @@ const PopulationMap = () => {
           onChildClick={(key, childProps) => onCityElementClick(childProps.city)}
           onZoomChange={onZoomChange}
           yesIWantToUseGoogleMapApiInternals
-          onGoogleApiLoaded={onGoogleApiLoaded}
         >
           {CITIES_DATA.map((city) => (
             [

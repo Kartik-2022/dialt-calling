@@ -9,6 +9,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { initializeOneSignal } from './utils/oneSignalHelpers';
 import MapPage from './pages/private/MapPage';
 import AddressSearchPage from './pages/private/AddressSearchPage';
+import OneSignalPage from './pages/private/OneSignalPage';
 
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/map" element={<MapPage />} />
           <Route path="/address-search" element={<AddressSearchPage />} />
+          <Route path="/one-signal" element={<OneSignalPage />} />
           </Route>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<div>404 Not Found</div>} />

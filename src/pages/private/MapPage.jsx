@@ -1,7 +1,7 @@
 // src/pages/private/MapPage.jsx
 import React from 'react';
-import Header from '../../components/Header'; 
-import PopulationMap from '../../components/PopulationMap'; 
+import Header from '../../components/Header';
+import PopulationMap from '../../components/PopulationMap';
 import { useNavigate } from 'react-router-dom';
 
 const MapPage = () => {
@@ -10,7 +10,8 @@ const MapPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
-      <div className="flex-grow w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      {/* Changed max-w-7xl to max-w-full or removed it, and adjusted padding */}
+      <div className="flex-grow w-full px-4 sm:px-6 lg:px-8 py-6 flex flex-col space-y-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold text-gray-900">Population Map</h2>
           <button

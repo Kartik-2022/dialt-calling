@@ -8,12 +8,19 @@
     <!-- Tailwind CSS CDN - for development convenience -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      body {
-        font-family: 'Inter', sans-serif;
+      /* Ensure body and html are set to full height and width */
+      html, body, #root {
+        height: 100%;
+        width: 100%;
         margin: 0;
         padding: 0;
-        box-sizing: border-box;
+        overflow-x: hidden; /* Prevent horizontal scrollbar if content slightly overflows */
       }
+      body {
+        font-family: 'Inter', sans-serif;
+        box-sizing: border-box; /* Ensure padding/border are included in element's total width/height */
+      }
+      /* Custom styles for the checkbox to match shadcn's visual */
       input[type="checkbox"] {
         -webkit-appearance: none;
         -moz-appearance: none;
@@ -23,13 +30,13 @@
         height: 16px;
         width: 16px;
         background-color: #fff;
-        border: 1px solid #d1d5db;
-        border-radius: 4px;
+        border: 1px solid #d1d5db; /* border-input */
+        border-radius: 4px; /* rounded-sm */
         cursor: pointer;
         position: relative;
       }
       input[type="checkbox"]:checked {
-        background-color: #0F172A;
+        background-color: #0F172A; /* bg-primary (dark slate) */
         border-color: #0F172A;
       }
       input[type="checkbox"]:checked::after {
@@ -45,10 +52,14 @@
       }
       input[type="checkbox"]:focus-visible {
         outline: none;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); /* focus-visible:ring-1 focus-visible:ring-ring */
       }
     </style>
- 
+    <!-- OneSignal CDN script -->
+    <!-- <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js"></script> -->
+
+    <!-- IMPORTANT: No Google Maps JavaScript API Script or initMap function here. -->
+    <!-- It is loaded by google-map-react directly in PopulationMap.jsx -->
 </head>
 <body>
     <div id="root"></div>

@@ -1,27 +1,45 @@
 // src/components/Header.jsx
-import React from 'react';
-import { LogOut, Plus } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { Link } from 'react-router-dom'; // Import Link
+import React from "react";
+import { useAuth } from "../context/AuthContext"; 
 
-const Header = () => {
-  const { logout } = useAuth();
+const Header = ({ onEnablePushNotifications, onViewMap, onGoToAddressSearch }) => {
+  const { logout } = useAuth(); 
 
   return (
-    <header className="flex items-center justify-between p-4 bg-white shadow-md">
-      <div className="flex items-center space-x-4">
-        <span className="text-xl font-bold text-gray-800">SMOOTHIRE</span>
+    <header className="bg-white shadow-sm py-4 px-6 flex items-center justify-between sticky top-0 z-10">
+      <div className="flex items-center">
+        <h1 className="text-2xl font-bold text-gray-900 mr-8">SMOOTHIRE</h1>
+
+        
+        <div className="flex space-x-4">
+          <button
+            onClick={onEnablePushNotifications}
+            className="px-3 py-1.5 bg-purple-600 text-white text-sm rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+          >
+            One Signal
+          </button>
+          <button
+            onClick={onViewMap}
+            className="px-3 py-1.5 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+          >
+             Map
+          </button>
+          <button
+            onClick={onGoToAddressSearch}
+            className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            Address Search
+          </button>
+        </div>
       </div>
-      <div className="flex items-center space-x-4">
-  
-        <button
-          onClick={logout}
-          className="flex items-center px-4 py-2 text-sm font-medium text-red-600 bg-red-100 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-        >
-          <LogOut className="w-4 h-4 mr-2" />
-          Logout
-        </button>
-      </div>
+
+      
+      <button
+        onClick={logout}
+        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+      >
+        Logout
+      </button>
     </header>
   );
 };
