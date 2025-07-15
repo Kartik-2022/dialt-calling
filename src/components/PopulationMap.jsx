@@ -1,5 +1,5 @@
 // src/components/PopulationMap.jsx
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import GoogleMapReact from 'google-map-react';
 import toast from 'react-hot-toast'; 
 import { GOOGLE_MAPS_API_KEY } from '../config';
@@ -41,11 +41,8 @@ const MapCircle = ({ lat, lng, radiusInPixels, onMouseEnter, onMouseLeave, onChi
   };
 
 const getCircleRadius = (population) => {
- 
   const basePixelRadius = Math.sqrt(population) *0.01 ; 
-
   const minVisiblePixelRadius = 35; 
-  
   return Math.max(basePixelRadius, minVisiblePixelRadius);
 };
 
@@ -54,6 +51,7 @@ const PopulationMap = () => {
   const [mapCenter, setMapCenter] = useState({ lat: 22.0, lng: 78.0 });
   const [mapZoom, setMapZoom] = useState(5);
   const [infoWindowData, setInfoWindowData] = useState(null);
+  const [mapType, setMapType] = useState('roadmap');
 
   
 
@@ -62,6 +60,8 @@ const PopulationMap = () => {
     setMapZoom(5);
     setMapCenter({ lat: 22.0, lng: 78.0 });
   }, []);
+
+
 
   const handleMouseEnterCity = useCallback((city) => {
     setInfoWindowData({ city: city });
@@ -72,6 +72,7 @@ const PopulationMap = () => {
     setInfoWindowData(null);
   }, []);
 
+
    const handleChildClickZoom = useCallback((city) => {
     setMapCenter({ lat: city.lat, lng: city.lng });
     setMapZoom(9); 
@@ -79,15 +80,60 @@ const PopulationMap = () => {
   }, []);
 
 
- 
-
   const onZoomChange = useCallback((newZoom) => {
     setMapZoom(newZoom);
   }, []);
 
 
+  const handleMapTypeChange = useCallback((type) => {
+    setMapType(type);
+  }, []);
+
+
+  const mapOptions = useMemo(() => ({
+    mapTypeId: mapType,
+    gestureHandling: 'greedy',
+    disableDefaultUI: false,
+  }), [mapType]);
+  
+
+  const onGoogleApiLoaded = useCallback(({ map, maps }) => {
+ if (map && maps) {
+      map.setMapTypeId(mapType); 
+    } 
+  }, [mapType]); 
+
+
+
   return (
     <div className="w-full h-[500px] rounded-lg overflow-hidden shadow-lg border border-gray-200 flex flex-col">
+           <div className="flex justify-center p-2 bg-white border-b border-gray-200 space-x-2">
+        <button
+          onClick={() => handleMapTypeChange('roadmap')}
+          className={`px-4 py-2 rounded-md text-sm font-medium ${
+            mapType === 'roadmap' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+          }`}
+        >
+          Roadmap
+        </button>
+        <button
+          onClick={() => handleMapTypeChange('satellite')}
+          className={`px-4 py-2 rounded-md text-sm font-medium ${
+            mapType === 'satellite' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+          }`}
+        >
+          Satellite
+        </button>
+        <button
+          onClick={() => handleMapTypeChange('terrain')}
+          className={`px-4 py-2 rounded-md text-sm font-medium ${
+            mapType === 'terrain' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+          }`}
+        >
+          Terrain
+        </button>
+      </div>
+
       <div style={{ flexGrow: 1, height: '100%' }}>
         <GoogleMapReact
          bootstrapURLKeys={{ key: GOOGLE_MAPS_API_KEY }}
@@ -98,7 +144,9 @@ const PopulationMap = () => {
           onClick={onMapClick}
           onChildClick={(key, childProps) => onCityElementClick(childProps.city)}
           onZoomChange={onZoomChange}
-          yesIWantToUseGoogleMapApiInternals
+          options={mapOptions}
+          mapTypeId={mapType}
+          onGoogleApiLoaded={onGoogleApiLoaded}
         >
           {CITIES_DATA.map((city) => (
             [
